@@ -70,8 +70,12 @@ def main():
                  20 - Current event without StartOver and following event with StartOver
                  21 - Future events with Startover and event following that without Startover
                  22 - Future events without Startover and event following that with Startover
+                 23 - Team Link Events
+                 24 - Main Events
                  
                  25 - Custom Field with channel filter
+                 26 - PVR Library Recorded
+                 27 - VOD Library Recorded
                     
                  q - quit \n    """
                  
@@ -209,6 +213,15 @@ def main():
                     cmd.sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "select b.ChanNum, b.ServiceName, c.EvName as 'Event', c.contentProviderID, c.startover, datetime(c.start, 'unixepoch', 'localtime') as StartTime, a.EvName as 'Following Event', a.contentProviderID, a.startover, datetime(a.start, 'unixepoch', 'localtime') as StartTime from event_list c inner join service_list b on (a.ContentID_Service = b.ContentID_Service) inner join event_list a on (a.start = (c.start + c.duration) and a.ContentID_Service = c.ContentID_Service) where datetime(c.start, 'unixepoch', 'localtime') < datetime(date('now', '+1 day'), 'localtime') and datetime(c.start + c.duration, 'unixepoch', 'localtime') >= datetime('now','localtime') and a.startover = 'true' and c.startover = 'false' and b.ChanNum is not 0 order by b.ChanNum asc;" """)
                     continue
 
+                elif x == '23':
+                    print('Team Link')
+                    cmd.sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "select distinct ChanNum, ServiceName, EvName, datetime(Start, 'unixepoch', 'localtime') from event_list inner join eventIds_teamLinkIds on event_list.ContentID_Event=eventIds_teamLinkIds.eventId inner join service_list on event_list.ContentID_Service=service_list.ContentID_Service order by Start" """)
+                    continue
+                elif x == '24':
+                    print('Main Event')
+                    cmd.sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "select a.EvName as 'Programme Title',datetime(a.start, 'unixepoch', 'localtime') as StartTime, datetime(a.start + a.duration, 'unixepoch', 'localtime') as Endtime, a.ppv_price, a.ppv_rentalperiod, a.ppv_serviceid, a.contentProviderID, a.uniqueContentID, b.Service_key as 'Service Key', c.value as 'Channel Tag', a.startover from event_list a inner join service_list b on (a.ContentID_Service=b.ContentID_Service) inner join ServiceCustomFields c on (a.ContentID_Service=c.serviceId)where datetime(a.start + a.duration, 'unixepoch', 'localtime')> datetime('now', 'localtime') and c.key='ChannelTag'and b.ChanNum=521 and a.ppv_serviceid is not NULL order by StartTime limit 50"  """)
+                    continue
+
                 elif x == '25':
                     custom = input('Enter Custom field search criteria "TV_NO_EPS" "MOVIE": ')
                     channel1 = input('Enter Enter Lower channel number: ')
@@ -216,9 +229,19 @@ def main():
                     channel_range = (channel1 + ' and ' + channel2)
                     print (channel_range)
                     print (custom)
-                    command = (f"""sqlite3 /tmp/cache.db "Select b.ChanNum,  a.EvName, datetime(a.start, 'unixepoch', 'localtime') as StartTime from event_list a inner join service_list b on (a.ContentID_Service = b.ContentID_Service) where datetime(a.start + a.duration, 'unixepoch', 'localtime') > datetime('now', 'localtime') and customFields like '%{custom}%' AND ChanNum between {channel_range} order by StartTime LIMIT 25;" """)
+                    command = (f"""sqlite3 /tmp/cache.db "Select b.ChanNum,  a.EvName, datetime(a.start, 'unixepoch', 'localtime') as StartTime from event_list a inner join service_list b on (a.ContentID_Service = b.ContentID_Service) where datetime(a.start + a.duration, 'unixepoch', 'localtime') > datetime('now', 'localtime') and customFields like '%{custom}%' AND ChanNum between {channel_range} order by StartTime LIMIT 25;"  """)
                     print (command)
                     cmd.sshSQLCommand(command)
+                    continue
+
+                elif x == '26':
+                    print('Library PVR Recorded')
+                    cmd.sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "attach '/tmp/cache.db' as db1; attach '/mnt/hd/meta/record.db' as db2; select a.ContentID_Recording,a.evname as '  Programme Title  ', a.episode_title as 'Episode title', datetime(Start,'unixepoch', 'localtime') as 'Recorded at', f.ServiceName as ' Channel Name ', e.value as 'Channel Source', a.series_Id, a.IsSeriesLinked, duration as 'Ev Dur(sec)', actual_duration as 'Rec Dur(sec)',  b.reached_playback_position as 'Watched Dur', a.tungsten_leadtime as 'Lead Time', a.tungsten_lagtime as 'Lag Time' from db1.recorded_event_list a inner join db2.recording b on (a.ContentID_Recording=b.id) inner join db1.RecordedEventCustomFields c on (a.ContentID_Recording=c.recordingId) inner join db1.ServiceCustomFields e on (a.ContentID_Service=e.serviceId) inner join db1.service_list f on (a.ContentID_Service=f.ContentID_Service) where c.key='TitleID' and e.key='ChannelSource'"  """)
+                    continue
+
+                elif x == '27':
+                    print('Library VOD Recorded')
+                    cmd.sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "attach '/tmp/cache.db' as db1; attach '/mnt/hd/meta/record.db' as db2; select distinct(ContentID_Recording), a.evname as '  Programme Title  ',a.series_Id,time(duration, 'unixepoch') as 'Asset Duration', time(actual_duration, 'unixepoch') as 'Watched Duration', d.value as 'Source Type', c.value as type from db1.recorded_event_list a inner join db2.recording b on (a.ContentID_Recording=b.id) inner join db1.RecordedEventCustomFields c on (a.ContentID_Recording=c.recordingId) inner join db1.RecordedEventCustomFields d on (a.ContentID_Recording=c.recordingId) where c.key='sourceType' and d.key='type'"  """)
                     continue
 
                 elif x == 'q':
