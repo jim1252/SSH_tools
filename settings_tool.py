@@ -277,12 +277,12 @@ def sendErlangSetup():
     print('Commands sent to STB to connect to Erlang Server')
 
 def erlangSQLite():
-    start = "sqlite3 /mnt/ffs/settings/active.db 'update active_table set value = "
+    start = "sqlite3 /mnt/ffs/settings/active.db 'UPDATE active_table set value="
     end = "'"
     global erlangSQLite
     erlangSQLite = start + '"description=server,user=' + cmd.CDSN + '.iq3,password=' + cmd.CDSN + \
-                   '.iq3,ip=elements-dev.xyz,domain=elements-dev.xyz,resource=iq3,auth=digest", modified = "true" where ' \
-                   'key = "tungsten.provisioning.xmpp1" '+ end
+                   '.iq3,domain=xmpp.connectedhomesolutions.net,resource=iq3,auth=digest" where ' \
+                   'key like "tungsten.provisioning.xmpp1" '+ end
     print (erlangSQLite)
 
 def erlangJid():
@@ -368,7 +368,11 @@ def main():
                    5 - Change STB Mode IP\Hybrid
                    6 - Connect to XMPP Erlang server (Pidgin, XMPP remote)
                    7 - FSR - Full System Reset
-                   8 - Screen Resolution for streaming assets, 8c for continuous\n
+                   8 - Screen Resolution for streaming assets, 8c for continuous
+                   9 - Connect to PTS "services.t1.foxtel-iq.com.au"
+                   10 - Download in IP Mode
+                   11 - Reset Keep stream as default message  
+                   12 - View bookablePromos available \n
                 *** Tester Settings ***
                   20 - Application tools 
                   21 - Reporting Settings
@@ -413,6 +417,9 @@ def main():
                             cmd.readSettings('settings_cli get tungsten.ux.autoStandbyTimeout')
                             enter = input('Enter Auto Standby time (Default 14400): ')
                             autoTime = str(enter)
+                            if autoTime != '0':
+                                print ('time' + autoTime)
+                                cmd.sshSettingsCommand('settings_cli set tungsten.ux.autoStandbyWarning "60"')
                             command = 'settings_cli set "tungsten.ux.autoStandbyTimeout"  '
                             global updateAutoTime
                             updateAutoTime = command + autoTime
@@ -493,6 +500,110 @@ def main():
                         print('CTRL+C Pressed. Shutting Down')
                         cmd.close()
                                     
+                elif x == '9': # Connect to PTS
+                    try:
+                        while True:
+                            options = """\n      Connect to PTS Enviroment     \n                            
+                 1 - Connect to settings_cli Set "application.mainapp.epg.sdp_host" "services.t1.foxtel-iq.com.au" 
+                 2 - Disconnect from PTS settings_cli Set "application.mainapp.epg.sdp_host" "services.p1.foxtel-iq.com.au"
+                 q - quit
+                 b - back                 """
+                            print(options)
+                            x = input('>: ')
+
+                            if x== '1':
+                                cmd.sshSettingsCommand('settings_cli Set "application.mainapp.epg.sdp_host" "services.t1.foxtel-iq.com.au"')
+                                print('Connecting to PTS')
+                                stbReboot()
+                                
+                            elif x == '2':
+                                cmd.sshSettingsCommand('settings_cli Set "application.mainapp.epg.sdp_host" "services.p1.foxtel-iq.com.au"')
+                                print('Disconnecting from PTS')
+                                stbReboot()
+                                
+                            elif x == 'q':
+                                cmd.close()
+                                sys.exit(0)
+
+                            elif x == 'b':
+                                break
+
+                            else:
+                                print('WARNING: {} is an unknown option. Try again'.format(x))
+                            continue
+
+                    except KeyboardInterrupt:
+                        print('CTRL+C Pressed. Shutting Down')
+                        cmd.close()
+                
+                elif x == '10': # Download in IP mode
+                    try:
+                        while True:
+                            options = """\n      Set Allow Download in IP Mode      \n                            
+                 0 - Check current setting
+                 1 - Allow Download in IP mode 
+                 2 - Turn off Download in IP Mode
+                 3 - When renting from store Download/Stream
+                 4 - When watching Foxtel On Demand content Download/Stream
+                 q - quit
+                 b - back                 """
+                            print(options)
+                            x = input('>: ')
+
+                            if x== '0':
+                                print('Checking Allow Download in IP Mode settings an user download setting values')
+                                cmd.sshSettingsCommand('settings_cli Get "application.mainapp.ALLOW_DOWNLOAD_IN_IP_MODE"')
+                                cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_PPV_PLAYBACK_TYPE"')
+                                cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_ON_DEMAND_PLAYBACK_TYPE"')
+                                                                                           
+                            elif x== '1': #Allow IP download
+                                cmd.sshSettingsCommand('settings_cli Set "application.mainapp.ALLOW_DOWNLOAD_IN_IP_MODE" "true"')
+                                print('Setting Allow Download in IP Mode to True')
+                                                               
+                            elif x == '2': #Don't allow IP Download
+                                cmd.sshSettingsCommand('settings_cli Set "application.mainapp.ALLOW_DOWNLOAD_IN_IP_MODE" "false"')
+                                print('Setting Allow Download in IP Mode to False')
+                                                                
+                            elif x == '3':  #TVOD playback type
+                                pbTypeChoosen = str(input('Enter required mode: stream or download: '))
+                                if pbTypeChoosen in playbackType:
+                                    print(pbTypeChoosen + ' Selected')
+                                    cmd.sshSettingsCommand("""calljs "oxygen.settings.ui.set('UI_SETTING_PPV_PLAYBACK_TYPE','%s')"  """"" % pbTypeChoosen)
+                                    
+                                else:
+                                    print('Audio format not recognised. Try again')
+                                
+                            elif x == '4':  #SVOD playback type                          
+                                pbTypeChoosen = str(input('Enter required mode: stream or download: '))
+                                if pbTypeChoosen in playbackType:
+                                    print(pbTypeChoosen + ' Selected')
+                                    cmd.sshSettingsCommand("""calljs "oxygen.settings.ui.set('UI_SETTING_ON_DEMAND_PLAYBACK_TYPE','%s')"  """"" % pbTypeChoosen)
+                                    
+                                else:
+                                    print('Audio format not recognised. Try again')                      
+                            
+                            elif x == 'q':
+                                cmd.close()
+                                sys.exit(0)
+
+                            elif x == 'b':
+                                break
+
+                            else:
+                                print('WARNING: {} is an unknown option. Try again'.format(x))
+                            continue
+
+                    except KeyboardInterrupt:
+                        print('CTRL+C Pressed. Shutting Down')
+                        cmd.close()
+                                
+                elif x == '11':
+                    cmd.sshSettingsCommand('settings_cli set "application.mainapp.UI_SETTING_OD_PLAYBACK_TYPE_DIALOG_SHOWN" "FALSE"')
+                    stbReboot()
+
+                elif x == '12':
+                    cmd.sshSettingsCommand('ls -l /tmp/bookablePromos')
+                
                 elif x == '20':
                     try:
                         while True:
@@ -502,12 +613,14 @@ def main():
                  3 - Status Amazon
                  4 - Status WPE Browser, FTA, Paramount+ 
                  5 - Status Disney
-                 6 - Kill Netflix 
-                 7 - Kill Amazon
-                 8 - Kill WPE Browser, FTA, Paramount+ 
-                 9 - Kill Disney Plus
-                 10 - Memory allocation tool
-                 11 - Netflix DRM 
+                 6 - Status YouTube
+                 7 - Kill Netflix 
+                 8 - Kill Amazon
+                 9 - Kill WPE Browser, FTA, Paramount+ 
+                 10 - Kill Disney Plus
+                 11 - Kill YouTube
+                 20 - Memory allocation tool
+                 21 - Netflix DRM 
                  r - reboot
                  q - quit
                  b - back
@@ -518,12 +631,18 @@ def main():
                             if x== '1':
                                 print('Netflix PID:')
                                 cmd.readSettings('echo `pidof netflix`')
+                                
                                 print('Amazon PID:')
                                 cmd.readSettings('echo `pidof ignition`')
+                                
                                 print('WPE Browser, FTA Paramount+ PID:')
                                 cmd.readSettings('echo `pidof cog`')
+                                
                                 print('Disney Plus PID:')
                                 cmd.readSettings('echo `pidof merlin`')
+                                
+                                print('YouTube:')
+                                cmd.readSettings('echo `pidof loader_app`')
                                 
                             elif x == '2':
                                 cmd.sshSettingsCommand('ps aux | grep Netflix')
@@ -538,18 +657,24 @@ def main():
                                 cmd.sshSettingsCommand('ps aux | grep -i [d]isneyplus')
                                 
                             elif x == '6':
-                                cmd.killApp('netflix')
+                                cmd.sshSettingsCommand(' ps aux | grep [c]obalt')
                                 
                             elif x == '7':
-                                cmd.killApp('ignition')
+                                cmd.killApp('netflix')
                                 
                             elif x == '8':
-                                cmd.killApp('cog')
+                                cmd.killApp('ignition')
                                 
                             elif x == '9':
-                                cmd.killApp('merlin')
+                                cmd.killApp('cog')
                                 
                             elif x == '10':
+                                cmd.killApp('merlin')
+                                
+                            elif x == '11':
+                                cmd.killApp('loader_app')
+                                
+                            elif x == '20':
                                 global memTotal
                                 memTotal = int(0)
                                 os.system('cls')
@@ -599,7 +724,7 @@ def main():
                                     print('CTRL+C Pressed. Shutting Down')
                                     cmd.close()
                                 
-                            elif x == '11':
+                            elif x == '21':
                                 try:
                                     while True:
                                         options = """\n    Netflix DRM \n                            
@@ -701,8 +826,8 @@ def main():
                                 continue
 
                             elif x == '4': # Change reporing URL (Reporting server that the STB sends to)
-                                reportingUrl = (input('Enter required URL, leave blank to set default: "https://www.elements-two.xyz/reporting/reportingIon": ')
-                                    or "https://www.elements-two.xyz/reporting/reportingIon")
+                                reportingUrl = (input('Enter required URL, leave blank to set default: "hhttps://8uc2224o95.execute-api.eu-west-2.amazonaws.com/default/reportingIon": ')
+                                    or "https://8uc2224o95.execute-api.eu-west-2.amazonaws.com/default/reportingIon")
                                 cmd.server_URL(reportingUrl)
                                 cmd.sshSettingsCommand(cmd.server)
                                 continue
@@ -846,6 +971,10 @@ def main():
                  32 - WPE free memory req for foreground
                  33 - WPE free process memory mark
                  34 - WPE free memory req for suspend \n
+                    ***Youtube*** \n
+                 40 - Youtube Low Memory Settings
+                 41 - Youtube free memory low mark 
+                 42 - Netflix free memory req for foreground \n             
                     
                  q - quit
                  b - Back
@@ -866,10 +995,10 @@ def main():
                                 cmd.readSettings('settings_cli get tungsten.appmanager.amazon_free_memory_req_for_foreground')
                                 cmd.readSettings('settings_cli get tungsten.appmanager.amazon_free_memory_req_for_suspend')
                                 cmd.readSettings('settings_cli get tungsten.appmanager.amazon_process_memory_mark')
-                                cmd.readSettings('settings_cli get tungsten.appmanager.amazon_free_memory_low_mark')
-                                cmd.readSettings('settings_cli get tungsten.appmanager.amazon_free_memory_req_for_foreground')
-                                cmd.readSettings('settings_cli get tungsten.appmanager.amazon_free_memory_req_for_suspend')
-                                cmd.readSettings('settings_cli get tungsten.appmanager.amazon_process_memory_mark')
+                                cmd.readSettings('settings_cli get tungsten.appmanager.cobalt_free_memory_low_mark')
+                                cmd.readSettings('settings_cli get tungsten.appmanager.cobalt_free_memory_req_for_foreground')
+                                cmd.readSettings('settings_cli get tungsten.appmanager.cobalt_free_memory_req_for_suspend')
+                                cmd.readSettings('settings_cli get tungsten.appmanager.cobalt_process_memory_mark')
                                 
                             elif x == '10': # Netflix
                                 cmd.readSettings('settings_cli get tungsten.appmanager.netflix_free_memory_low_mark')
@@ -972,6 +1101,26 @@ def main():
                                 command = 'settings_cli set "tungsten.appmanager.wpe_free_memory_req_for_suspend" '
                                 wpeSuspend = command + lowMark
                                 cmd.sshSettingsCommand(wpeSuspend)
+                                
+                            elif x == '40': # Youtube
+                                cmd.readSettings('settings_cli get tungsten.appmanager.cobalt_free_memory_low_mark')
+                                cmd.readSettings('settings_cli get tungsten.appmanager.cobalt_free_memory_req_for_foreground')
+                                cmd.readSettings('settings_cli get tungsten.appmanager.cobalt_free_memory_req_for_suspend')
+                                cmd.readSettings('settings_cli get tungsten.appmanager.cobalt_process_memory_mark')
+                                
+                            elif x == '41': # Youtube
+                                enter = input('Enter required value for Youtube free memory low mark (default = 153600): ')
+                                lowMark = str(enter)
+                                command = 'settings_cli set "tungsten.appmanager.cobalt_free_memory_low_mark" '
+                                youtubeLowMark = command + lowMark
+                                cmd.sshSettingsCommand(youtubeLowMark)
+                                
+                            elif x == '42': # Youtube
+                                enter = input('Enter required value for Youtube free memory req for foreground (default value = 225280): ')
+                                lowMark = str(enter)
+                                command = 'settings_cli set "tungsten.appmanager.cobalt_free_memory_req_for_foreground" '
+                                youtubeForeground = command + lowMark
+                                cmd.sshSettingsCommand(youtubeForeground)
                                 
                             elif x == 'q':
                                 cmd.close()
@@ -1405,7 +1554,7 @@ def main():
                                 cmd.sshSettingsCommand("""calljs "oxygen.settings.ui.set('UI_SETTING_POSTCARDS_ENABLED','%s')"  """"" % postcardEnabled)
                                                                 
                             elif x == '3': #Downloading to library 
-                                print ('Current STM Mode:  ' + stbDetails["STB Mode"])
+                                print ('STB can only download in http - Current STM Mode:  ' + stbDetails["STB Mode"])
                                 modeCheck = 'dsmcc'
                                 if modeCheck in stbDetails.values():
                                     try:
@@ -1426,7 +1575,7 @@ def main():
                                     print ('STB is in IP Mode this setting is not available')
                                 
                             elif x == '4':
-                                print ('Current STM Mode:  ' + stbDetails["STB Mode"])
+                                print ('STB can only download in http - Current STM Mode:  ' + stbDetails["STB Mode"])
                                 modeCheck = 'dsmcc'
                                 if modeCheck in stbDetails.values():
                                     try:
@@ -1446,7 +1595,7 @@ def main():
                                     print ('STB is in IP Mode this setting is not available')
                                 
                             elif x == '5':
-                                print ('Current STM Mode:  ' + stbDetails["STB Mode"])
+                                print ('STB can only download in http - Current STM Mode:  ' + stbDetails["STB Mode"])
                                 modeCheck = 'dsmcc'
                                 if modeCheck in stbDetails.values():
                                     try:

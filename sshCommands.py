@@ -303,7 +303,7 @@ def SoftwareDetails():
     
 def stbMacAddr(): # gets the STB's ethernet MAC address and sets it global as macaddr
     ifconfig ='/sbin/ifconfig'
-    stdin, stdout, stderr = ssh.exec_command(ifconfig, get_pty=True)
+    stdin, stdout, stderr = ssh.exec_command(ifconfig)
     stdin.close()
     stderr.close()
     global lines
@@ -327,6 +327,7 @@ def gizmoCommand(): #Createa the command to get the gizmoID from the STB
     
 def getMode():
     stdin, stdout, stderr = ssh.exec_command('settings_cli get "tungsten.ux.DeliveryMode" ')
+    print ('Sending Command: settings_cli get "tungsten.ux.DeliveryMode" ')
     stdin.close()
     stderr.close()
     global lines
