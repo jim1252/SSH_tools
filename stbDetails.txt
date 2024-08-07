@@ -1,7 +1,0 @@
-iQ:iQ3
-CDSN:62079176129
-IP:136.170.172.111
-serial Number:0209152190100279
-software Version: 20.0.2.3-D
-build Number: 924084
-STB Mode:dsmcc
