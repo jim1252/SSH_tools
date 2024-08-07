@@ -8,7 +8,7 @@ Contributors:   N/A7
 
 Copyright
 ---------
-Copyright 2009-2022 Commscope Inc. All rights reserved.
+Copyright 2009-2024 Commscope Inc. All rights reserved.
 This program is confidential and proprietary to Commscope Inc.
 (CommScope), and may not be copied, reproduced, modified, disclosed to
 others, published or used, in whole or in part, without the express
