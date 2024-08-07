@@ -76,16 +76,22 @@ def getSTBdetails():
     cmd.getCDSN() 
     cmd.model_type()
     stbDetails.update({"iQ": sshCommands.box_type}) #
+    stbPrimary.update({"iQ": sshCommands.box_type})
     stbDetails.update({"CDSN": sshCommands.CDSN}) #add CDSN to stbDetail dictionary
     stbPrimary.update({"CDSN": sshCommands.CDSN})  # add CDSN to stbPrimary dictionary
     stbDetails.update({"IP": ip}) #add IP to stbDetail dictionary
+    stbPrimary.update({"IP": ip})  # add IP to stbPrimary dictionary
     cmd.getSerialNumber()
     stbDetails.update({"serial Number": sshCommands.serialNumber}) # add serial number to stbDetail dictionary
+    stbPrimary.update({"serial Number": sshCommands.serialNumber})
     cmd.SoftwareDetails()
     stbDetails.update({"software Version": sshCommands.softwareVer}) # add software version to stbDetail dictionary
+    stbPrimary.update({"software Version": sshCommands.softwareVer})
     stbDetails.update({"build Number": sshCommands.buildVer}) # add software build number to stbDetail dictionary
+    stbPrimary.update({"build Number": sshCommands.buildVer})
     cmd.getMode()
     stbDetails.update({"STB Mode": sshCommands.stbMode}) #add mode to stbDetail dictionary
+    stbPrimary.update({"STB Mode": sshCommands.stbMode})
 
 def reportingServer_URL():
     args = get_args()
@@ -148,41 +154,111 @@ def rf_feed():
 def settingsRead():
     print('Read Settings')
     cmd.readSettings('settings_cli get "tungsten.ux.DeliveryMode" ')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ux.DeliveryMode" , "', '')
+    stbPrimary.update({"STB Mode": ss1})  # add STB auto Standby Time to stbPrimary dictionary
     cmd.readSettings('settings_cli get tungsten.ux.autoStandbyTimeout')
-    cmd.readSettings('settings_cli Get "tungsten.ams.enabled" ')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ux.autoStandbyTimeout" , "', '')
+    stbPrimary.update({"autoStandbyTimeout": ss1})  # add STB auto Standby Time to stbPrimary dictionary
+    cmd.readSettings('settings_cli Get "tungsten.ams.enabled"')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ams.enabled" , "', '')
+    stbPrimary.update({"reportingEnabled": ss1})  # add STB ams/reporting enabled to stbPrimary dictionary
     cmd.readSettings('settings_cli Get "tungsten.ams.updateDelay" ')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ams.updateDelay" , "', '')
+    stbPrimary.update({"updateDelay": ss1})  # add Reporting message delay to stbPrimary dictionary
     cmd.readSettings('settings_cli Get "tungsten.reporting_service.appConfigReportDelay" ')
-    cmd.readSettings('settings_cli Get "tungsten.reporting_service.uri" ')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.reporting_service.appConfigReportDelay" , "', '')
+    stbPrimary.update({"appConfigReportDelay": ss1})  # add Reporting Config delay to stbPrimary dictionary
+    cmd.readSettings('settings_cli get tungsten.reporting_service.uri')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.reporting_service.uri" , "', '')
+    stbPrimary.update({"reportinguri": ss1})  # add reporting uri to stbPrimary dictionary
     cmd.readSettings('settings_cli Get "tungsten.reporting_service.sendEventsToLocalFileOnly" ')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.reporting_service.sendEventsToLocalFileOnly" , "', '')
+    stbPrimary.update({"sendEventsToLocalFileOnly": ss1})  # EventsToLocalFileOnly to stbPrimary dictionary
     cmd.readSettings('settings_cli Get "tungsten.ams.numEventsInBundle" ')
-    cmd.readSettings('settings_cli Get tungsten.ams.cacheSize ')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ams.numEventsInBundle" , "', '')
+    stbPrimary.update({"ams.numEventsInBundle": ss1})  # add reportingEventsInBundle to stbPrimary dictionary
+    cmd.readSettings('settings_cli Get "tungsten.ams.cacheSize" ')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ams.cacheSize" , "', '')
+    stbPrimary.update({"ams.CacheSize": ss1})  # add reportingCacheSize to stbPrimary dictionary
     cmd.readSettings('settings_cli Get "tungsten.ams.AmsID"')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ams.AmsID" , "', '')
+    stbPrimary.update({"AmsID": ss1})  # add AmsID to stbPrimary dictionary
     cmd.readSettings('settings_cli Get "tungsten.watermark.profile"')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.watermark.profile" , "', '')
+    stbPrimary.update({"watermark.profile": ss1})  # add STB waterwmark profile to stbPrimary dictionary
     cmd.readSettings('settings_cli Get "tungsten.watermark.alpha"')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.watermark.alpha" , "', '')
+    stbPrimary.update({"watermark.alpha": ss1})  # add STB watermark alpha to stbPrimary dictionary
     cmd.readSettings('settings_cli Get "tungsten.watermark.enabled"')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.watermark.enabled" , "', '')
+    stbPrimary.update({"watermark.enabled": ss1})  # add STB auto Standby Time to stbPrimary dictionary
     cmd.readSettings('settings_cli get "tungsten.ux.audioSettingsFormatSpdif"')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ux.audioSettingsFormatSpdif" , "', '')
+    stbPrimary.update({"audioSettingsFormatSpdif": ss1})
     cmd.readSettings('settings_cli get "tungsten.ux.audioSettingsFormatHdmi"')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ux.audioSettingsFormatHdmi" , "', '')
+    stbPrimary.update({"audioSettingsFormatHdmi": ss1})
     cmd.readSettings('settings_cli get "tungsten.ux.digitalAudioLevel"')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ux.digitalAudioLevel" , "', '')
+    stbPrimary.update({"digitalAudioLevel": ss1})
     cmd.readSettings('settings_cli get "tungsten.ux.digitalAudioLevelHdmi"')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ux.digitalAudioLevelHdmi" , "', '')
+    stbPrimary.update({"digitalAudioLevelHdmi": ss1})
     cmd.readSettings('settings_cli get "tungsten.ux.audioDelay"')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ux.audioDelay" , "', '')
+    stbPrimary.update({"audioDelay": ss1})
     cmd.readSettings('settings_cli get "tungsten.ux.audioDelayHdmi"')
-    cmd.readSettings('settings_cli get tungsten.ux.parentalRating')
-    cmd.readSettings('settings_cli get application.mainapp.UI_SETTING_PICTURE_RATING')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ux.audioDelayHdmi" , "', '')
+    stbPrimary.update({"audioDelayHdmi": ss1})
+    cmd.readSettings('settings_cli get "tungsten.ux.parentalRating"')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ux.parentalRating" , "', '')
+    stbPrimary.update({"parentalRating": ss1})
+    cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_PICTURE_RATING"')
+    ss1 = sshCommands.saveSetting.replace('"application.mainapp.UI_SETTING_PICTURE_RATING" , "', '')
+    stbPrimary.update({"UI_SETTING_PICTURE_RATING": ss1})
     cmd.readSettings('settings_cli Get "tungsten.ux.nonRatedPC"')
-    cmd.readSettings('settings_cli get application.mainapp.UI_SETTING_PIN_PURCHASE')
-    cmd.readSettings('settings_cli get application.mainapp.UI_SETTING_PIN_KEPT_PROGRAMS')
-    cmd.readSettings('settings_cli get application.mainapp.UI_SETTING_PIN_IP_VIDEO')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ux.nonRatedPC" , "', '')
+    stbPrimary.update({"nonRatedPC": ss1})
+    cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_PIN_PURCHASE"')
+    ss1 = sshCommands.saveSetting.replace('"application.mainapp.UI_SETTING_PIN_PURCHASE" , "', '')
+    stbPrimary.update({"UI_SETTING_PIN_PURCHASE": ss1})
+    cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_PIN_KEPT_PROGRAMS"')
+    ss1 = sshCommands.saveSetting.replace('"application.mainapp.UI_SETTING_PIN_KEPT_PROGRAMS" , "', '')
+    stbPrimary.update({"UI_SETTING_PIN_KEPT_PROGRAMS": ss1})
+    cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_PIN_IP_VIDEO"')
+    ss1 = sshCommands.saveSetting.replace('"application.mainapp.UI_SETTING_PIN_IP_VIDEO" , "', '')
+    stbPrimary.update({"UI_SETTING_PIN_IP_VIDEO": ss1})
     cmd.readSettings('settings_cli get "tungsten.ux.ParentalPincode"')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ux.ParentalPincode" , "', '')
+    stbPrimary.update({"ParentalPincode": ss1})
     cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_BANDWIDTH_QUALITY"')
+    ss1 = sshCommands.saveSetting.replace('"application.mainapp.UI_SETTING_BANDWIDTH_QUALITY" , "', '')
+    stbPrimary.update({"UI_SETTING_BANDWIDTH_QUALITY": ss1})
     cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_POSTCARDS_ENABLED"')
+    ss1 = sshCommands.saveSetting.replace('"application.mainapp.UI_SETTING_POSTCARDS_ENABLED" , "', '')
+    stbPrimary.update({"UI_SETTING_POSTCARDS_ENABLED": ss1})
     cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_DOWNLOAD_QUALITY"')
+    ss1 = sshCommands.saveSetting.replace('"application.mainapp.UI_SETTING_DOWNLOAD_QUALITY" , "', '')
+    stbPrimary.update({"UI_SETTING_DOWNLOAD_QUALITY": ss1})
     cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_PPV_PLAYBACK_TYPE"')
+    ss1 = sshCommands.saveSetting.replace('"application.mainapp.UI_SETTING_PPV_PLAYBACK_TYPE" , "', '')
+    stbPrimary.update({"UI_SETTING_PPV_PLAYBACK_TYPE": ss1})
     cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_ON_DEMAND_PLAYBACK_TYPE"')
+    ss1 = sshCommands.saveSetting.replace('"application.mainapp.UI_SETTING_ON_DEMAND_PLAYBACK_TYPE" , "', '')
+    stbPrimary.update({"UI_SETTING_ON_DEMAND_PLAYBACK_TYPE": ss1})
     cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_BUFFER_SIZE"')
-    cmd.readSettings('settings_cli get application.mainapp.UI_SETTING_VOICE_ENABLED')
-    cmd.readSettings('settings_cli get tungsten.ux.hdmiCecControlSetting')
-    cmd.readSettings('settings_cli get tungsten.ux.hdmiCecVolumeControlSetting')
-     
+    ss1 = sshCommands.saveSetting.replace('"application.mainapp.UI_SETTING_BUFFER_SIZE" , "', '')
+    stbPrimary.update({"UI_SETTING_BUFFER_SIZE": ss1})
+    cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_VOICE_ENABLED"')
+    ss1 = sshCommands.saveSetting.replace('"application.mainapp.UI_SETTING_VOICE_ENABLED" , "', '')
+    stbPrimary.update({"UI_SETTING_VOICE_ENABLED": ss1})
+    cmd.readSettings('settings_cli get "tungsten.ux.hdmiCecControlSetting"')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ux.hdmiCecControlSetting" , "', '')
+    stbPrimary.update({"hdmiCecControlSetting": ss1})
+    cmd.readSettings('settings_cli get "tungsten.ux.hdmiCecVolumeControlSetting"')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ux.hdmiCecVolumeControlSetting" , "', '')
+    stbPrimary.update({"hdmiCecVolumeControlSetting": ss1})
+
 def stbReboot():
     cmd.sshCmd('/sbin/reboot -d 5') #reboots the STB after a 5 second delay
     print('rebooting STB')
@@ -195,28 +271,34 @@ def writeDetailsFile(): #writes STB deatils to a text file called stbDetails
             f.write('%s:%s\n' % (key, value)) #writes each key on a new line in text file
     #detailsFile.close() #Close file
 
-def writeSettingsFile(): #writes user settings to json file stbSettings.json
+def writeSettingsFile(): #writes user settings from dict stbPrimary to json file stbSettings.json
     with open('stbSettings.json', 'w', encoding='UTF-8') as write_file:
         json.dump(stbPrimary, write_file)
 
-def readSettingsFile():  #read settings json file shows user the settings values
+def readSettingsFile():  #read settings json file shows user the settings values and updates dict stbPrimary
     try:
         with open("stbSettings.json", "r", encoding='UTF-8') as read_file:
-            jsonRead = json.load(read_file)
-            print(jsonRead)
+            stbPrimary.update (json.load(read_file))
+            print(stbPrimary)
+            '''
             stbPrimary.update({"CDSN": jsonRead["CDSN"]})
             stbPrimary.update({"updateDelay": jsonRead["updateDelay"]})
             stbPrimary.update({"appConfigReportDelay": jsonRead["appConfigReportDelay"]})
             stbPrimary.update({"autoStandbyTimeout": jsonRead["autoStandbyTimeout"]})
+            stbPrimary.update({"reportinguri": jsonRead["reportinguri"]})
+            stbPrimary.update({"reportingEnabled": jsonRead["reportingEnabled"]})
             stbPrimary.update({"watermark.profile": jsonRead["watermark.profile"]})
             stbPrimary.update({"watermark.alpha": jsonRead["watermark.alpha"]})
             stbPrimary.update({"watermark.enabled": jsonRead["watermark.enabled"]})
             stbPrimary.update({"ParentalPincode": jsonRead["ParentalPincode"]})
             #stbPrimary.update({"appConfigReportDelay": jsonRead["appConfigReportDelay"]})
+            '''
     except FileNotFoundError: # only used if file has not yet been created
         print('User settings file has not yet been created, please create one by running writing settings to file')
 
-def getUserSettings(): # read user settings and write to file
+def getUserSettings(): # read user settings save in dict stbPrimary and write to file
+    settingsRead()
+    '''
     cmd.readSettings('settings_cli Get "tungsten.ams.updateDelay" ')
     ss1 = sshCommands.saveSetting.replace('"tungsten.ams.updateDelay" , "', '')
     stbPrimary.update({"updateDelay": ss1})  # add Reporting message delay to stbPrimary dictionary
@@ -228,7 +310,15 @@ def getUserSettings(): # read user settings and write to file
     cmd.readSettings('settings_cli get tungsten.ux.autoStandbyTimeout')
     ss1 = sshCommands.saveSetting.replace('"tungsten.ux.autoStandbyTimeout" , "', '')
     stbPrimary.update({"autoStandbyTimeout": ss1})  # add STB auto Standby Time to stbPrimary dictionary
-    
+
+    cmd.readSettings('settings_cli get tungsten.reporting_service.uri')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.reporting_service.uri" , "', '')
+    stbPrimary.update({"reportinguri": ss1})  # add reporting uri to stbPrimary dictionary
+
+    cmd.readSettings('settings_cli Get "tungsten.ams.enabled"')
+    ss1 = sshCommands.saveSetting.replace('"tungsten.ams.enabled" , "', '')
+    stbPrimary.update({"reportingEnabled": ss1})  # add STB ams/reporting enabled to stbPrimary dictionary
+
     cmd.readSettings('settings_cli Get "tungsten.watermark.profile"')
     ss1 = sshCommands.saveSetting.replace('"tungsten.watermark.profile" , "', '')
     stbPrimary.update({"watermark.profile": ss1})  # add STB waterwmark profile to stbPrimary dictionary
@@ -244,11 +334,11 @@ def getUserSettings(): # read user settings and write to file
     cmd.readSettings('settings_cli get "tungsten.ux.ParentalPincode"')
     ss1 = sshCommands.saveSetting.replace('"tungsten.ux.ParentalPincode" , "', '')
     stbPrimary.update({"ParentalPincode": ss1})  # add Reporting message delay to stbPrimary dictionary
-    
+    '''
     print(stbPrimary)
     writeSettingsFile() # Write settings to file
 
-def updateUserSettings(): # gets settings from json file and sends them to the STB
+def updateUserSettings(): # gets settings from json file puts them in dict stbPrimary and sends them to the STB
     readSettingsFile() # read the json file shows it on screen
     primarySet = stbPrimary['updateDelay']
     cmd.sshCmd("""settings_cli set "tungsten.ams.updateDelay"%s """ % primarySet)
@@ -256,6 +346,10 @@ def updateUserSettings(): # gets settings from json file and sends them to the S
     cmd.sshCmd("""settings_cli set "tungsten.reporting_service.appConfigReportDelay"%s """ % primarySet)
     primarySet = stbPrimary['autoStandbyTimeout']
     cmd.sshCmd("""settings_cli set "tungsten.ux.autoStandbyTimeout"%s """ % primarySet)
+    primarySet = stbPrimary['reportingEnabled']
+    cmd.sshCmd("""settings_cli set "tungsten.ams.enabled"%s """ % primarySet)
+    primarySet = stbPrimary['reportinguri']
+    cmd.sshCmd("""settings_cli set "tungsten.reporting_service.uri"%s """ % primarySet)
     primarySet = stbPrimary['watermark.profile']
     cmd.sshCmd("""settings_cli set "tungsten.watermark.profile"%s """ % primarySet)
     primarySet = stbPrimary['watermark.alpha']
@@ -268,9 +362,10 @@ def updateUserSettings(): # gets settings from json file and sends them to the S
 def sendErlangSetup():
     print('Sending commands to set STB to ejabbered Server')
     erlangSQLite()
-    erlangJid()
+    # erlangJid = """sqlite3 /mnt/ffs/settings/active.db 'update active_table set value = "trustedJids=remotedvr@cobalt.pace.com,remotedvr@elements-dev.xyz,remotedvr@elements.commscope.com,automation2.0@elements-dev.xyz,scripts@elements-dev.xyz,human@elements-dev.xyz", modified = "true" where key = "tungsten.provisioning.xmppConfiguration" ' """
+    command = """sqlite3 /mnt/ffs/settings/active.db 'update active_table set value = "trustedJids=remotedvr@cobalt.pace.com,remotedvr@elements-dev.xyz,remotedvr@xmpp.connectedhomesolutions.net,remotedvr@elements.commscope.com,scripts@elements-dev.xyz,human@elements-dev.xyz,automation2.0@elements-dev.xyz,remotedvr@xmpp.connectedhomesolutions.net,automation2.0@xmpp.connectedhomesolutions.net,scripts@xmpp.connectedhomesolutions.net,human@xmpp.connectedhomesolutions.net,foxtel_automation@managed.dev-xmpp.foxtel.com.au,foxtel_automation@xmpp.thomasholtdrive.com", modified = "true" where key = "tungsten.provisioning.xmppConfiguration";' """
     cmd.sshCmd(erlangSQLite)
-    cmd.sshCmd(erlangJid)
+    cmd.sshCmd(command)
     cmd.sshCmd('settings_cli Set "application.mainapp.AUTOMATION_2_0_ENABLED" true')
     cmd.sshCmd('settings_cli Set "application.mainapp.AUTOMATION_2_0_XMPP_DESTINATION" COMMSCOPE_A2.0')
     cmd.sshCmd('/sbin/reboot -d 2') #reboots the STB after a 2 second delay
@@ -284,13 +379,6 @@ def erlangSQLite():
                    '.iq3,domain=xmpp.connectedhomesolutions.net,resource=iq3,auth=digest" where ' \
                    'key like "tungsten.provisioning.xmpp1" '+ end
     print (erlangSQLite)
-
-def erlangJid():
-    print ('Create Jid command for Erlang server')
-    global erlangJid
-    erlangJid = """sqlite3 /mnt/ffs/settings/active.db 'update active_table set value = "trustedJids=remotedvr@cobalt.pace.com,remotedvr@elements-dev.xyz,remotedvr@elements.commscope.com,automation2.0@elements-dev.xyz,scripts@elements-dev.xyz,human@elements-dev.xyz", modified = "true" where key = "tungsten.provisioning.xmppConfiguration" ' """
-    #erlangJid = start + middle + end
-    print(erlangJid)
 
 def main():
     print('main running')
@@ -340,19 +428,6 @@ def main():
         print('open')
         cmd.sshConnection(ip)
         getSTBdetails()
-        #cmd.getCDSN() 
-        #cmd.model_type()
-        #stbDetails.update({"iQ": sshCommands.box_type}) #
-        #stbDetails.update({"CDSN": sshCommands.CDSN}) #add CDSN to stbDetail dictionary
-        #stbPrimary.update({"CDSN": sshCommands.CDSN})  # add CDSN to stbPrimary dictionary
-        #stbDetails.update({"IP": args.ip}) #add IP to stbDetail dictionary
-        #cmd.getSerialNumber()
-        #stbDetails.update({"serial Number": sshCommands.serialNumber}) # add serial number to stbDetail dictionary
-        #cmd.SoftwareDetails()
-        #stbDetails.update({"software Version": sshCommands.softwareVer}) # add software version to stbDetail dictionary
-        #stbDetails.update({"build Number": sshCommands.buildVer}) # add software build number to stbDetail dictionary
-        #cmd.getMode()
-        #stbDetails.update({"STB Mode": sshCommands.stbMode}) #add mode to stbDetail dictionary
         writeDetailsFile()
         
         try:
@@ -370,7 +445,7 @@ def main():
                    7 - FSR - Full System Reset
                    8 - Screen Resolution for streaming assets, 8c for continuous
                    9 - Connect to PTS "services.t1.foxtel-iq.com.au"
-                   10 - Download in IP Mode
+                   10 - TBC
                    11 - Reset Keep stream as default message  
                    12 - View bookablePromos available \n
                 *** Tester Settings ***
@@ -379,7 +454,10 @@ def main():
                   22 - Watermark Settings
                   23 - Low memory Values
                   24 - Time management Priorities 
-                  25 - Point STB at different provisioning service \n
+                  25 - Point STB at different provisioning service \n                
+                *** Developer Settings ***
+                  30 - Download in IP mode
+                  31 - Disable "reset iQ system" \n
                 *** User Settings ***
                   40 - Audio Settings 
                   41 - Parental control Settings
@@ -415,9 +493,14 @@ def main():
                         while True:
                             print('current Auto Standby time is: ')
                             cmd.readSettings('settings_cli get tungsten.ux.autoStandbyTimeout')
+                            ss1 = sshCommands.saveSetting.replace('"tungsten.ux.autoStandbyTimeout" , "', '')
+                            stbPrimary.update({"autoStandbyTimeout": ss1})  # add STB auto Standby Time to stbPrimary dictionary
                             enter = input('Enter Auto Standby time (Default 14400): ')
-                            autoTime = str(enter)
-                            if autoTime != '0':
+                            autoTime = str(enter) #autoTime new time to set STB to
+                            cmd.readSettings('settings_cli Get "tungsten.ux.autoStandbyWarning"')
+                            ss1 = sshCommands.saveSetting.replace('"tungsten.ux.autoStandbyWarning" , "', '')
+                            stbPrimary.update({"autoStandbyWarning": ss1})  # add Standby warning to stbPrimary dictionary
+                            if autoTime != '60':
                                 print ('time' + autoTime)
                                 cmd.sshSettingsCommand('settings_cli set tungsten.ux.autoStandbyWarning "60"')
                             command = 'settings_cli set "tungsten.ux.autoStandbyTimeout"  '
@@ -425,6 +508,9 @@ def main():
                             updateAutoTime = command + autoTime
                             print(updateAutoTime)
                             cmd.sshSettingsCommand(updateAutoTime)
+                            cmd.readSettings('settings_cli get tungsten.ux.autoStandbyTimeout')
+                            ss1 = sshCommands.saveSetting.replace('"tungsten.ux.autoStandbyTimeout" , "', '')
+                            stbPrimary.update({"autoStandbyTimeout": ss1})  # add STB auto Standby Time to stbPrimary dictionary
                             break
                     except KeyboardInterrupt:
                         continue
@@ -521,67 +607,6 @@ def main():
                                 print('Disconnecting from PTS')
                                 stbReboot()
                                 
-                            elif x == 'q':
-                                cmd.close()
-                                sys.exit(0)
-
-                            elif x == 'b':
-                                break
-
-                            else:
-                                print('WARNING: {} is an unknown option. Try again'.format(x))
-                            continue
-
-                    except KeyboardInterrupt:
-                        print('CTRL+C Pressed. Shutting Down')
-                        cmd.close()
-                
-                elif x == '10': # Download in IP mode
-                    try:
-                        while True:
-                            options = """\n      Set Allow Download in IP Mode      \n                            
-                 0 - Check current setting
-                 1 - Allow Download in IP mode 
-                 2 - Turn off Download in IP Mode
-                 3 - When renting from store Download/Stream
-                 4 - When watching Foxtel On Demand content Download/Stream
-                 q - quit
-                 b - back                 """
-                            print(options)
-                            x = input('>: ')
-
-                            if x== '0':
-                                print('Checking Allow Download in IP Mode settings an user download setting values')
-                                cmd.sshSettingsCommand('settings_cli Get "application.mainapp.ALLOW_DOWNLOAD_IN_IP_MODE"')
-                                cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_PPV_PLAYBACK_TYPE"')
-                                cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_ON_DEMAND_PLAYBACK_TYPE"')
-                                                                                           
-                            elif x== '1': #Allow IP download
-                                cmd.sshSettingsCommand('settings_cli Set "application.mainapp.ALLOW_DOWNLOAD_IN_IP_MODE" "true"')
-                                print('Setting Allow Download in IP Mode to True')
-                                                               
-                            elif x == '2': #Don't allow IP Download
-                                cmd.sshSettingsCommand('settings_cli Set "application.mainapp.ALLOW_DOWNLOAD_IN_IP_MODE" "false"')
-                                print('Setting Allow Download in IP Mode to False')
-                                                                
-                            elif x == '3':  #TVOD playback type
-                                pbTypeChoosen = str(input('Enter required mode: stream or download: '))
-                                if pbTypeChoosen in playbackType:
-                                    print(pbTypeChoosen + ' Selected')
-                                    cmd.sshSettingsCommand("""calljs "oxygen.settings.ui.set('UI_SETTING_PPV_PLAYBACK_TYPE','%s')"  """"" % pbTypeChoosen)
-                                    
-                                else:
-                                    print('Audio format not recognised. Try again')
-                                
-                            elif x == '4':  #SVOD playback type                          
-                                pbTypeChoosen = str(input('Enter required mode: stream or download: '))
-                                if pbTypeChoosen in playbackType:
-                                    print(pbTypeChoosen + ' Selected')
-                                    cmd.sshSettingsCommand("""calljs "oxygen.settings.ui.set('UI_SETTING_ON_DEMAND_PLAYBACK_TYPE','%s')"  """"" % pbTypeChoosen)
-                                    
-                                else:
-                                    print('Audio format not recognised. Try again')                      
-                            
                             elif x == 'q':
                                 cmd.close()
                                 sys.exit(0)
@@ -1206,6 +1231,7 @@ def main():
                  3 - Set provisioning.cdn_url_service to server http://tu-services.arrisi.com:5001
                  4 - Set default provisioning.cdn_url_service
                  5 - Set own  provisioning.play_service
+                 6 - Set own  provisioning.cdn_url_service
                  q - quit
                  b - back
                  """
@@ -1232,11 +1258,18 @@ def main():
                                 enter = input('Enter youe URL of provisioning play Service eg "https://fake-services.catalogue.foxtel.com.au/fxtl/v1/play" : ')
                                 playService = str(enter)
                                 command = 'settings_cli Set "tungsten.provisioning.play_service" '
-                                #global updatePlayService
                                 updatePlayService = command + playService
                                 #print (updatePlayService)
                                 cmd.sshSettingsCommand(updatePlayService)
                                 
+                            elif x == '6':
+                                enter = input('Enter youe URL of provisioning cdn_url service eg "https://fake-services.catalogue.foxtel.com.au/fxtl/v1/play" : ')
+                                cdn_url = str(enter)
+                                command = 'settings_cli Set "tungsten.provisioning.cdn_url_service" '
+                                update_cdn_url = command + cdn_url
+                                #print (update_cdn_url)
+                                cmd.sshSettingsCommand(update_cdn_url)
+                            
                             elif x == 'q':
                                 cmd.close()
                                 sys.exit(0)
@@ -1248,6 +1281,114 @@ def main():
                                 print('WARNING: {} is an unknown option. Try again'.format(x))
                             continue
                             
+                    except KeyboardInterrupt:
+                        print('CTRL+C Pressed. Shutting Down')
+                        cmd.close()
+                
+                elif x == '30': # Download in IP mode
+                    try:
+                        while True:
+                            options = """\n      Set Allow Download in IP Mode      \n                            
+                 0 - Check current setting
+                 1 - Allow Download in IP mode 
+                 2 - Turn off Download in IP Mode
+                 3 - When renting from store Download/Stream
+                 4 - When watching Foxtel On Demand content Download/Stream
+                 q - quit
+                 b - back                 """
+                            print(options)
+                            x = input('>: ')
+
+                            if x== '0':
+                                print('Checking Allow Download in IP Mode settings an user download setting values')
+                                cmd.sshSettingsCommand('settings_cli Get "application.mainapp.ALLOW_DOWNLOAD_IN_IP_MODE"')
+                                cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_PPV_PLAYBACK_TYPE"')
+                                cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_ON_DEMAND_PLAYBACK_TYPE"')
+                                                                                           
+                            elif x== '1': #Allow IP download
+                                cmd.sshSettingsCommand('settings_cli Set "application.mainapp.ALLOW_DOWNLOAD_IN_IP_MODE" "true"')
+                                print('Setting Allow Download in IP Mode to True')
+                                                               
+                            elif x == '2': #Don't allow IP Download
+                                cmd.sshSettingsCommand('settings_cli Set "application.mainapp.ALLOW_DOWNLOAD_IN_IP_MODE" "false"')
+                                print('Setting Allow Download in IP Mode to False')
+                                                                
+                            elif x == '3':  #TVOD playback type
+                                pbTypeChoosen = str(input('Enter required mode: stream or download: '))
+                                if pbTypeChoosen in playbackType:
+                                    print(pbTypeChoosen + ' Selected')
+                                    cmd.sshSettingsCommand("""calljs "oxygen.settings.ui.set('UI_SETTING_PPV_PLAYBACK_TYPE','%s')"  """"" % pbTypeChoosen)
+                                    
+                                else:
+                                    print('Audio format not recognised. Try again')
+                                
+                            elif x == '4':  #SVOD playback type                          
+                                pbTypeChoosen = str(input('Enter required mode: stream or download: '))
+                                if pbTypeChoosen in playbackType:
+                                    print(pbTypeChoosen + ' Selected')
+                                    cmd.sshSettingsCommand("""calljs "oxygen.settings.ui.set('UI_SETTING_ON_DEMAND_PLAYBACK_TYPE','%s')"  """"" % pbTypeChoosen)
+                                    
+                                else:
+                                    print('Audio format not recognised. Try again')                      
+                            
+                            elif x == 'q':
+                                cmd.close()
+                                sys.exit(0)
+
+                            elif x == 'b':
+                                break
+
+                            else:
+                                print('WARNING: {} is an unknown option. Try again'.format(x))
+                            continue
+
+                    except KeyboardInterrupt:
+                        print('CTRL+C Pressed. Shutting Down')
+                        cmd.close()
+                
+                elif x == '31': # Disable Reset iQ system 
+                    try:
+                        while True:
+                            options = """\n      Set Allow Download in IP Mode      \n                            
+                 0 - Check current setting
+                 1 - Disable "reset iQ System"
+                 2 - Enable "reset iQ system"
+                 3 - Delete "reset iQ system" setting
+                 q - quit
+                 b - back                 """
+                            print(options)
+                            x = input('>: ')
+
+                            if x== '0':
+                                print('Checking reset iQ system setting')
+                                cmd.sshSettingsCommand('settings_cli Get "application.mainapp.SYSTEM_RESET_DISABLED"')
+                                #cmd.readSettings('settings_cli get "application.mainapp.UI_SETTING_PPV_PLAYBACK_TYPE"')
+                                 
+                            elif x== '1': #Disable
+                                cmd.sshSettingsCommand('settings_cli set "application.mainapp.SYSTEM_RESET_DISABLED" "true"')
+                                print('Disable "reset iQ System"')
+                                stbReboot()
+                                                               
+                            elif x == '2': #Enable
+                                cmd.sshSettingsCommand('settings_cli set "application.mainapp.SYSTEM_RESET_DISABLED" "false"')
+                                print('Enable "reset iQ System"')
+                                stbReboot()
+                                
+                            elif x == '3': #Delete
+                                cmd.sshSettingsCommand('settings_cli del "application.mainapp.SYSTEM_RESET_DISABLED"')
+                                print('Deleting "reset iQ System" setting')
+                                            
+                            elif x == 'q':
+                                cmd.close()
+                                sys.exit(0)
+
+                            elif x == 'b':
+                                break
+
+                            else:
+                                print('WARNING: {} is an unknown option. Try again'.format(x))
+                            continue
+
                     except KeyboardInterrupt:
                         print('CTRL+C Pressed. Shutting Down')
                         cmd.close()
@@ -1723,7 +1864,17 @@ def main():
 
                 elif x == '52':
                     settingsRead()
+
+                elif x == '53':
+                    print (stbDetails)
             
+                elif x == '54':
+                    print (stbPrimary)
+
+                elif x == '55':
+                    print(stbDetails)
+                    print(stbPrimary)
+
                 elif x == '60':
                     getUserSettings()
                     continue
