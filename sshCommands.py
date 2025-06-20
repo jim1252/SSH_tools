@@ -7,7 +7,7 @@ Contributors:   N/A
 
 Copyright
 ---------
-Copyright 2009-2023 Commscope Inc. All rights reserved.
+Copyright 2009-2024 Commscope Inc. All rights reserved.
 This program is confidential and proprietary to Commscope Inc.
 (CommScope), and may not be copied, reproduced, modified, disclosed to
 others, published or used, in whole or in part, without the express
@@ -53,12 +53,23 @@ def get_args():
                                                epilog='for additional help contact James McArthur')
     reporting_parser.add_argument('ip', action='store',
                                   help='IP Address of the STB to Update (Required)')
+    reporting_parser.add_argument('-rf_connection', action='store_true',
+                                  help="simulate disconnection of RF feed.  ")
+    reporting_parser.add_argument('-erlang_Connect', action='store_true',
+                                  help='Connect to XMPP Erlang server (For access to Pidgin, XMPP remote) the STB reboots after commands have been sent.  If build is very old and script does not run because of new additions this should connect STB to Erlang server regardless')
+    reporting_parser.add_argument('-reboot', action='store_true', help='Reboots STB')
+    reporting_parser.add_argument('-read', action='store_true', help="return values for all reporting settings")
+    reporting_parser.add_argument('-details', action='store_true', help="returns STB details; CDSN Serial number, mode")
     reporting_parser.add_argument('-options', action='store_true',
                                   help='Opens a menu to individually set the main reporting settings')
+    reporting_parser.add_argument('--debug', action='store_true', help='Debug Printing')
 
     return reporting_parser.parse_args()
 
 def sshConnection(ip): #Create SSH connection to STB
+    args = get_args()
+    if args.debug:
+        print ('Using paramiko to create SSH shell')
     print('calling paramiko')
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     print ('Trying to connect to', ip)
@@ -68,12 +79,18 @@ def sshConnection(ip): #Create SSH connection to STB
 def sshSendCommand(command):
     stdin, stdout, stderr = ssh.exec_command(command, timeout=5)
     stdin.close()
+    args = get_args()
+    if args.debug:
+        print ('command sent,  Stdout is variable lines err is variable err')
     global lines
     lines = stdout.readlines()
     global err
     err = stderr.readlines()
     
 def sshCommand(command): #Send command to STB and return stdout and stderr, only for developing new areas
+    args = get_args()
+    if args.debug:
+        print ('sshCommand prints stdout, stderr')
     print ('sending Command: ' + command)
     sshSendCommand(command)
     print(*lines, sep = ",")
@@ -114,9 +131,11 @@ def sshCmd(command): #Send command to STB no confirmation no STB response requir
         print ('Command Sent:  ' + command)
         return False
     
-def sshRespCommand(command): #Send command to STB confirmation only no command sent shown
-    #global lines
+def sshRespCommand(command, debug): #Send command to STB confirmation only no command sent shown
+    
     try:
+        if debug == True:
+            print ('sending Command: ' + command)
         sshSendCommand(command)
         print(*lines)
         return True
@@ -193,9 +212,6 @@ def sshResolution(command): #Send command to STB to get the current screen resol
     lines = stdout.readlines()
     lines = lines.pop(9)
     lines = lines.rstrip('\n')
-    #del lines[-3:-1]
-    #del lines[-1]
-    #del lines[0:9]
     print(lines)
     return True
 
@@ -206,19 +222,6 @@ def killApp(application):
     sshCmd(f'kill -9 {stbReadSetting[:5]}')
     readSettings(getpid)
 
-def reportingDelay(timeDelay): #Set Reporting updateDelay, user input
-    if timeDelay:
-        print('updateDelay time set')
-
-    else:
-        timeDelay = input('Enter Reporting time delay(default 3600): ')
-
-    timeStr = str(timeDelay)
-    command = 'settings_cli Set "tungsten.ams.updateDelay" '
-    global updateDelay
-    updateDelay = command + timeStr
-    print (updateDelay)
-    
 def appConfigReportDelay(config): #Set Application Configuration, user input
     if config:
         print('config set')
@@ -313,17 +316,6 @@ def stbMacAddr(): # gets the STB's ethernet MAC address and sets it global as ma
     global macaddr
     macaddr = macaddr1.rstrip(' \r\n')
     print ('MAC Address: ' + macaddr)
-
-def gizmoCommand(): #Createa the command to get the gizmoID from the STB
-    stbMacAddr()
-    echo ='echo -n '
-    md5 =' | md5sum'
-    global gizmoCommand
-    gizmoCommand = echo + macaddr + md5
-    print (gizmoCommand)
-    sshCommand(gizmoCommand)
-    gizmoID = lines[0]
-    print('gizmoID -', gizmoID)
     
 def getMode():
     stdin, stdout, stderr = ssh.exec_command('settings_cli get "tungsten.ux.DeliveryMode" ')
@@ -377,14 +369,6 @@ def reporting_enable(enable):
     enableCommand = command + enableStr
     print (enableCommand)
 
-def send_to_file(file):
-    #print(file)
-    fileStr = str(file)
-    command = 'settings_cli Set "tungsten.reporting_service.sendEventsToLocalFileOnly" '
-    global fileCommand
-    fileCommand = command + fileStr
-    print(fileCommand)
-
 def server_URL(url):
     print('server URL =', url)
     configCommand = 'settings_cli set "tungsten.reporting_service.uri" '
@@ -412,8 +396,6 @@ def stbIP(): # User enters IP address for STB
 def main():
 
     stbIP()
-    #reportingDelay()
-    #appConfigReportDelay()
     sshConnection(userIp)
     sshSettingsCommand(updateDelay)
     sshSettingsCommand(appConfigDelay)

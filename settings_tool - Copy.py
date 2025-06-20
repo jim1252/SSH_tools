@@ -47,17 +47,6 @@ stbDetails = {} # Create Dictionary for STB details
 stbPrimary = {} # Create Dictionary for Primary Settings
 mySTBs = {} # Create Dictionary for nested STB dictionaries
 
-class stb:
-    def __init__(self, CDSN, saved):
-        self.CDSN = CDSN
-        self.saved = saved
-        
-    def savedState(self):
-        print('STB: ' + self.CDSN + ' - Settings saved: ' + self.saved)
-
-s1 = stb('00000000', 'false')
-
-
 def get_args():
     reporting_parser = argparse.ArgumentParser(description='To set the reporting settings on a STB', epilog='for additional help contact James McArthur')
     reporting_parser.add_argument('ip', action='store', help='IP Address of the STB to Update (Required)')
@@ -95,16 +84,19 @@ def getSTBdetails():
     if args.debug:
         print (connectedSTB)
     
+    global stbSaved
+    stbSaved = 'unknown'
+    
     if mySTBs.get(connectedSTB) is not None: # if the STB is in mySTBS extract STB settings too stbPrimary
-        s1.saved = "true"
+        stbSaved = 'true'
         print(f"The STB {connectedSTB} is in the file.")
         if args.debug:
             print('test see if I can extract dictionary \n', mySTBs[connectedSTB])
         stbPrimary = mySTBs[connectedSTB]
-        
         if args.debug:
             print ('test what is in stbPrimary \n', stbPrimary)
     else: 
+        stbSaved = 'false'
         print(f"The STB {connectedSTB} is not the file.") # if the STB is not in mySTBS - user input
         try:
             while True:
@@ -113,10 +105,7 @@ def getSTBdetails():
                     
                 if confirm == 'Y':
                     #print('User selected yes, still in development no actions taken')
-                    writeToFile()
-                    s1.CDSN = stbDetails['CDSN']
-                    s1.saved = "true"
-                    s1.savedState()
+                    writeToFile(stbSaved)
                     break
                     
                 elif confirm == 'N':
@@ -139,8 +128,6 @@ def getSTBdetails():
     stbDetails.update({"STB Mode": cmd.stbMode}) #add mode to stbDetail dictionary
     stbPrimary.update({"STB Mode": cmd.stbMode})
        
-    s1.CDSN = stbDetails['CDSN']
-        
     if args.debug:
         print('stbPrimary Dictionary', stbPrimary)
     #mySTBs[cmd.CDSN] = stbPrimary # needs changing overwrites everything
@@ -319,39 +306,43 @@ def rebootHard():
     cmd.close() # Closes SSH
     sys.exit(0) #Exit Settings script
 
+
 def stbReboot():
-    if s1.saved == 'true':
-        print ('stb is saved')
-        updateMySTB()
-        writemySTBsFile()
-
-    else:
-        writemySTBsFile()
-
+    writemySTBsFile()
     cmd.sshCmd('/sbin/reboot -d 5') #reboots the STB after a 5 second delay
     print('rebooting STB')
     cmd.close() # Closes SSH
     sys.exit(0) #Exit Settings script
 
 def autoWrite(): #if STB has been saved current settings are automatically written to file
-    s1.savedState()
-    if s1.saved == 'true':
+    print ('STB has been saved:' + stbSaved)
+    if stbSaved == 'true':
         print ('stb is saved')
         updateMySTB()
         writemySTBsFile()
-
-    else:
-        print('STB settings have not been saved')
 
 def writeDetailsFile(): #writes STB deatils to a text file called stbDetails
     with open ('stbDetails.txt', 'w', encoding='UTF-8') as f: # Opens file
         for key, value in stbDetails.items(): # stbDetails - dictionary containing info
             f.write('%s:%s\n' % (key, value)) #writes each key on a new line in text file
     #detailsFile.close() #Close file
+
+def writeSettingsFile(): #writes user settings from dict stbPrimary to json file stbSettings.json
+    with open('stbSettings.json', 'w', encoding='UTF-8') as write_file:
+        json.dump(stbPrimary, write_file)
         
 def writemySTBsFile(): # writes mySTBs dictionary to mySTBs.json
     with open('mySTBs.json', 'w', encoding='UTF-8') as write_file:
         json.dump(mySTBs, write_file)
+        
+def readSettingsFile():  #read settings json file shows user the settings values and updates dict stbPrimary
+    try:
+        with open("stbSettings.json", "r", encoding='UTF-8') as read_file:
+            stbPrimary.update (json.load(read_file))
+            print(stbPrimary)
+            
+    except FileNotFoundError: # only used if file has not yet been created
+        print('User settings file has not yet been created, please create one by running writing settings to file')
 
 def readmySTBsFile():  #read mySTBs json file shows user the settings values and updates dict mySTBs
     args = get_args()
@@ -365,23 +356,24 @@ def readmySTBsFile():  #read mySTBs json file shows user the settings values and
     except FileNotFoundError: # only used if file has not yet been created
         print('User settings file has not yet been created, please create one by running writing settings to file')
 
+def saved(stbSaved): #passing argument test
+    print(stbSaved)
 
-def writeToFile(): # read user settings save in dict and write to file
+def writeToFile(stbSaved): # read user settings save in dict and write to file
     args = get_args()
-   
-    if s1.saved == 'false':
-        print ('stb is not saved, reading settings to write to file')
+    if stbSaved == 'false':
+        print ('stb is not saved')
         settingsRead()
-
-    updateMySTB() # Current stbPrimary dict updated in mySTBS so it can be written to file
+    updateMySTB()
     if args.debug:
         print('stbPrimary Dictionary', stbPrimary)
         #print('mySTBs dictionary', mySTBs)
+    writeSettingsFile() # Write settings to file - stbPrimary
     writemySTBsFile() # Write all STB info to file - mySTBs
-    s1.saved = "true"
-    if args.debug:
-        s1.savedState()
-  
+    print (stbSaved)
+    stbSaved = 'true'
+    print (stbSaved)
+
 def updateMySTB(): # Current stbPrimary dict updated in mySTBS so it can be written to file 
     args = get_args()
     CDSN = stbPrimary['CDSN']
@@ -393,18 +385,6 @@ def updateMySTB(): # Current stbPrimary dict updated in mySTBS so it can be writ
     if args.debug:
         print ('updated mySTBs Dictionary: \n', mySTBs)
     print ('mySTBs have been updated')
-
-def writeDefaultFile(): #writes user settings from dict stbPrimary to json file stbSettings.json
-    with open('stbDefault.json', 'w', encoding='UTF-8') as write_file:
-        json.dump(stbPrimary, write_file)
-        
-def readDefaultFile():  #read settings json file shows user the settings values and updates dict stbPrimary
-    try:
-        with open("stbDefault.json", "r", encoding='UTF-8') as read_file:
-            stbPrimary.update (json.load(read_file))
-                                    
-    except FileNotFoundError: # only used if file has not yet been created
-        print('User settings file has not yet been created, please create one by running writing settings to file')
 
 def updateUserSettings(): # uses settings dict stbPrimary and sends them to the STB
     primarySet = stbPrimary['updateDelay']
@@ -425,7 +405,28 @@ def updateUserSettings(): # uses settings dict stbPrimary and sends them to the 
     cmd.sshCmd("""settings_cli set "tungsten.watermark.enabled"%s """ % primarySet)
     primarySet = stbPrimary['ParentalPincode']
     cmd.sshCmd("""settings_cli set "tungsten.ux.ParentalPincode"%s """ % primarySet)
-  
+    '''
+def updateUserSettings1(): # gets settings from json file puts them in dict stbPrimary and sends them to the STB
+    readSettingsFile() # read the json file shows it on screen
+    primarySet = stbPrimary['updateDelay']
+    cmd.sshCmd("""settings_cli set "tungsten.ams.updateDelay"%s """ % primarySet)
+    primarySet = stbPrimary['appConfigReportDelay']
+    cmd.sshCmd("""settings_cli set "tungsten.reporting_service.appConfigReportDelay"%s """ % primarySet)
+    primarySet = stbPrimary['autoStandbyTimeout']
+    cmd.sshCmd("""settings_cli set "tungsten.ux.autoStandbyTimeout"%s """ % primarySet)
+    primarySet = stbPrimary['reportingEnabled']
+    cmd.sshCmd("""settings_cli set "tungsten.ams.enabled"%s """ % primarySet)
+    primarySet = stbPrimary['reportinguri']
+    cmd.sshCmd("""settings_cli set "tungsten.reporting_service.uri"%s """ % primarySet)
+    primarySet = stbPrimary['watermark.profile']
+    cmd.sshCmd("""settings_cli set "tungsten.watermark.profile"%s """ % primarySet)
+    primarySet = stbPrimary['watermark.alpha']
+    cmd.sshCmd("""settings_cli set "tungsten.watermark.alpha"%s """ % primarySet)
+    primarySet = stbPrimary['watermark.enabled']
+    cmd.sshCmd("""settings_cli set "tungsten.watermark.enabled"%s """ % primarySet)
+    primarySet = stbPrimary['ParentalPincode']
+    cmd.sshCmd("""settings_cli set "tungsten.ux.ParentalPincode"%s """ % primarySet)'''
+
 def sendErlangSetup():
     print('Sending commands to set STB to ejabbered Server')
     erlangSQLite()
@@ -495,6 +496,7 @@ def main():
         cmd.readSettings('settings_cli get "tungsten.standby.rebootCountSinceFSR"')
         rebootFSR = cmd.saveSetting.replace('"tungsten.standby.rebootCountSinceFSR" , "', '')
         if args.debug:
+            print('STB saved: ' + stbSaved)
             print('reboots since FSR: ' + rebootFSR)
         if stbPrimary.get('rebootCountSinceFSR') is None:
             print ('No FSR count')
@@ -557,20 +559,17 @@ def main():
                    9 - Connect to PTS "services.t1.foxtel-iq.com.au"
                    10 - YouBora Server Connection
                    11 - Reset Keep stream as default message  
-                   12 - View bookablePromos available 
-                   90 - TV guide setup\n
+                   12 - View bookablePromos available \n
                 *** Tester Settings ***
                   20 - Application tools 
                   21 - Reporting Settings
                   22 - Watermark Settings
                   23 - Low memory Values
                   24 - Time management Priorities 
-                  25 - Point STB at different provisioning service 
-                  26 - STB default settings\n                
+                  25 - Point STB at different provisioning service \n                
                 *** Developer Settings ***
                   30 - Download in IP mode
-                  31 - Disable "reset iQ system" 
-                  32 - Customer Education screen\n
+                  31 - Disable "reset iQ system" \n
                 *** User Settings ***
                   40 - Audio Settings 
                   41 - Parental control Settings
@@ -580,6 +579,9 @@ def main():
                   50 - System Details
                   51 - Software Details
                   52 - Read all settings \n 
+                *** Testers Default Settings ***
+                  61 - Read User Settings from file
+                  62 - Update User settings \n
                    r - Reboot STB
                    s - Save Settings
                    q - quit \n
@@ -645,7 +647,6 @@ def main():
                                 print('RF Feeds Connected')
                                 
                             elif x == 'q':
-                                autoWrite()
                                 cmd.close()
                                 sys.exit(0)
 
@@ -719,7 +720,6 @@ def main():
                                 stbReboot()
                                 
                             elif x == 'q':
-                                autoWrite()
                                 cmd.close()
                                 sys.exit(0)
 
@@ -768,7 +768,6 @@ def main():
                                 #stbReboot() # is this needed    
                             
                             elif x == 'q':
-                                autoWrite()
                                 cmd.close()
                                 sys.exit(0)
 
@@ -949,7 +948,6 @@ def main():
                                 stbReboot()
                             
                             elif x == 'q':
-                                autoWrite()
                                 cmd.close()
                                 sys.exit(0)
                      
@@ -1120,7 +1118,7 @@ def main():
                                 reportingSetup()
                                 
                             elif x == 'q':
-                                autoWrite()
+                                writemySTBsFile()
                                 cmd.close()
                                 sys.exit(0)
                 
@@ -1207,7 +1205,6 @@ def main():
                                 stbPrimary.update({"watermark.enabled": ss1})  # add STB auto Standby Time to stbPrimary dictionary
                                 
                             elif x == 'q':
-                                autoWrite()
                                 cmd.close()
                                 sys.exit(0)
                             
@@ -1398,7 +1395,6 @@ def main():
                                 cmd.sshSettingsCommand(youtubeForeground)
                                 
                             elif x == 'q':
-                                autoWrite()
                                 cmd.close()
                                 sys.exit(0)    
                                 
@@ -1458,7 +1454,6 @@ def main():
                                 print('enable')
                                 
                             elif x == 'q':
-                                autoWrite()
                                 cmd.close()
                                 sys.exit(0)
                      
@@ -1523,7 +1518,6 @@ def main():
                                 cmd.sshSettingsCommand(update_cdn_url)
                             
                             elif x == 'q':
-                                autoWrite()
                                 cmd.close()
                                 sys.exit(0)
                      
@@ -1538,72 +1532,6 @@ def main():
                         print('CTRL+C Pressed. Shutting Down')
                         cmd.close()
                 
-                elif x == '26': # Download in IP mode
-                    try:
-                        while True:
-                            options = """\n      Testers Default/Reset Settings      \n  
-                  0 - Get User Settings from file
-                  1 - Set Default file with setting from current STB
-                  2 - Update User settings 
-                  3 - List of settings included in default 
-                  4 - Reset settings to last saved version 
-                  r - reboot\n                  q - quit\n                  b - back\n        """
-
-                            print(options)
-                            x = input('>: ')
-
-                            if x == '0':
-                                readDefaultFile()
-                                print (stbPrimary)
-                                for x, y in stbPrimary.items():
-                                    print(x,':', y)
-                                
-                            elif x == '1': #keeping to use as update default settings
-                                writeDefaultFile()
-
-                            elif x == '2':
-                                readDefaultFile()
-                                updateUserSettings()
-                                settingsRead()
-
-                            elif x == '3':
-                                print(""" *** Default Tester Settings ***
- tungsten.ams.updateDelay"\n tungsten.ams.enabled\n tungsten.reporting_service.uri\n tungsten.ux.autoStandbyTimeout
- tungsten.watermark.profile\n tungsten.watermark.alpha\n tungsten.watermark.enabled\n tungsten.ux.ParentalPincode""")
-
-                            elif x == '4':
-                                print ('4 selected')
-                                confirm = input('This will restore STB default settings to the last known values, ideally after a FSR or when the STB is of unknown state. \nValues are saved Manually, Save settings on main options list, or on exit of this script? To continue enter Y: ')
-                    
-                                if confirm == 'Y':
-                                    print ('Y selected')
-                                    #readmySTBsFile()
-                                    #getSTBdetails()
-                                    #updateUserSettings()
-                                    #settingsRead()
-                                                                      
-                                else:
-                                    print('canceled')                                
-
-                            elif x == 'q':
-                                autoWrite()
-                                cmd.close()
-                                sys.exit(0)
-
-                            elif x == 'b':
-                                break
-
-                            elif x == 'r':
-                                stbReboot()
-
-                            else:
-                                print('WARNING: {} is an unknown option. Try again'.format(x))
-
-                    except KeyboardInterrupt:
-                        print('CTRL+C Pressed. Shutting Down')
-                        cmd.close()
-                
-
                 elif x == '30': # Download in IP mode
                     try:
                         while True:
@@ -1651,7 +1579,6 @@ def main():
                                     print('Audio format not recognised. Try again')                      
                             
                             elif x == 'q':
-                                autoWrite()
                                 cmd.close()
                                 sys.exit(0)
 
@@ -1699,54 +1626,12 @@ def main():
                                 print('Deleting "reset iQ System" setting')
                                             
                             elif x == 'q':
-                                autoWrite()
                                 cmd.close()
                                 sys.exit(0)
 
                             elif x == 'b':
                                 break
 
-                            else:
-                                print('WARNING: {} is an unknown option. Try again'.format(x))
-                            continue
-
-                    except KeyboardInterrupt:
-                        print('CTRL+C Pressed. Shutting Down')
-                        cmd.close()
-                
-                elif x == '32': # Customer education screen
-
-                    try:
-                        while True:
-                            options = """\n      Education Screen Settings e      \n                            
-                 0 - Check current setting - 
-                 1 - Clear the flag  
-                 q - quit
-                 b - back
-                 r - reboot                 """
-                            print(options)
-                            x = input('>: ')
-
-                            if x== '0':
-                                print('Checking Education screen Software versions')
-                                cmd.sshSettingsCommand('settings_cli Get "application.mainapp.UI_SETTING_EDUCATION_PAST_SOFTWARE_VERSIONS"')
-                                
-                            elif x== '1': #Delete
-                                cmd.sshSettingsCommand('settings_cli del "application.mainapp.UI_SETTING_EDUCATION_PAST_SOFTWARE_VERSIONS" ')
-                                print('The Education past software versions have been cleared')
-                                #stbReboot()
-                                                               
-                            elif x == 'q':
-                                autoWrite()
-                                cmd.close()
-                                sys.exit(0)
-
-                            elif x == 'b':
-                                break
-
-                            elif x == 'r':
-                                stbReboot()
-                            
                             else:
                                 print('WARNING: {} is an unknown option. Try again'.format(x))
                             continue
@@ -1890,7 +1775,6 @@ def main():
                                     print('CTRL+C Pressed')
                                 
                             elif x == 'q':
-                                autoWrite()
                                 cmd.close()
                                 sys.exit(0)
                      
@@ -2023,7 +1907,6 @@ def main():
                                 cmd.sshSettingsCommand(updateParentalPIN)
                                                            
                             elif x == 'q':
-                                autoWrite()
                                 cmd.close()
                                 sys.exit(0)
                      
@@ -2167,7 +2050,6 @@ def main():
                                     print ('STB is in IP Mode this setting is not available')
                             
                             elif x == 'q':
-                                autoWrite()
                                 cmd.close()
                                 sys.exit(0)
                      
@@ -2221,7 +2103,6 @@ def main():
                                 cmd.sshSettingsCommand(hdmiCecVolume)
                                 
                             elif x == 'q':
-                                autoWrite()
                                 cmd.close()
                                 sys.exit(0)
                      
@@ -2279,23 +2160,38 @@ def main():
                 elif x == '57':
                     updateMySTB()
                     
+                elif x == '58':
+                    saved(stbSaved)
+
+                elif x == '61':
+                    readSettingsFile()
+                    continue
                     
-                elif x == '90':
-                    cmd.sshSettingsCommand('settings_cli set "application.mainapp.epg.sdp_host" "services.p1.foxtel-iq.com.au"')
-                    cmd.sshSettingsCommand('settings_cli set "application.mainapp.GUIDE_CATEGORY_CAROUSEL_URL_1" "/sd/foxtel-catalog/carousels/Home/NewToFoxtel"')
-                    cmd.sshSettingsCommand('settings_cli set "application.mainapp.GUIDE_CATEGORY_CAROUSEL_URL_2" "/sd/foxtel-catalog/carousels/Home/TrendingNow"')
-                    cmd.sshSettingsCommand('settings_cli set "application.mainapp.GUIDE_CATEGORY_CAROUSEL_URL_3" "/sd/foxtel-catalog/carousels/TVShows/Featured/TVShowsForYouPersonalisation"')
-                    cmd.sshSettingsCommand('settings_cli set "application.mainapp.GUIDE_CATEGORY_CAROUSEL_URL_4" "/sd/foxtel-catalog/carousels/Movies/Featured/NewMovies"')
-                    cmd.sshSettingsCommand('settings_cli set "application.mainapp.GUIDE_CATEGORY_CAROUSEL_URL_5" "/sd/foxtel-catalog/carousels/Sport/Featured/SportFixtures"')
-                    cmd.sshSettingsCommand('settings_cli set "application.mainapp.GUIDE_CATEGORY_CAROUSEL_URL_6" "/sd/foxtel-catalog/carousels/TVShows/Featured/LifeAndStyle"')
-                    cmd.sshSettingsCommand('settings_cli set "application.mainapp.GUIDE_CATEGORY_CAROUSEL_URL_7" "/sd/foxtel-catalog/carousels/TVShows/Docos/MostPopularDocos"')
-                    cmd.sshSettingsCommand('settings_cli set "application.mainapp.GUIDE_CATEGORY_CAROUSEL_URL_8" "/sd/foxtel-catalog/carousels/Kids/FavouriteCharactersEditorial"')
-                    cmd.sshSettingsCommand('settings_cli set "application.mainapp.GUIDE_CATEGORY_CAROUSEL_URL_9" "/sd/foxtel-catalog/carousels/TVShows/Comedy/LiveNews"')
-                    cmd.sshSettingsCommand('settings_cli set "application.mainapp.GUIDE_CATEGORY_CAROUSEL_URL_10" "/sd/foxtel-catalog/carousels/TVShowsDocosMusicandEntertainment" ')
-                    cmd.sshSettingsCommand('settings_cli set "application.mainapp.GUIDE_CATEGORY_CAROUSEL_URL_11" "/sd/foxtel-catalog/carousels/Home/BrowseByCategory/International" ')
-                    cmd.sshSettingsCommand('settings_cli set "application.mainapp.GUIDE_CATEGORY_CAROUSEL_URL_12" "/sd/foxtel-catalog/carousels/Home/RecommendedForYou"')
-                    cmd.sshSettingsCommand('calljs "location.reload()"')
-                                                       
+                elif x == '62':
+                    updateUserSettings()
+                    continue
+                
+                elif x == '63': #keeping to use as update default settings
+                    with open("stbSettings.json", "r", encoding='UTF-8') as read_file:
+                        jsonRead = json.load(read_file)
+                        stbPrimary.update({"CDSN": jsonRead["CDSN"]}) # Update stbPrimary dictionary with the CDSN from the file  
+                        print('CDSN from file: ' + stbPrimary['CDSN'])
+                        print('CDSN of the STB: ' + stbDetails['CDSN'])
+                        
+                        if stbPrimary['CDSN'] == stbDetails['CDSN']: # Compares CDSN values of from the file and of the STB
+                            updateUserSettings()
+                            
+                        else: # if CDSN's don't match request confirmation to continue
+                            confirm = input('These settings were saved from another STB do you want to continue? To continue enter Y : ')
+                            if confirm == 'Y':
+                                updateUserSettings()
+                                
+                            else:
+                                print('canceled')
+                                continue
+                                
+                        stbPrimary.update({"CDSN": cmd.CDSN})  # reverts CDSN of stbPrimary dictionary to the STB's CDSN
+                
                 elif x == '200':
                     try:
                         while True:
@@ -2316,7 +2212,7 @@ def main():
                                 print('enable')
                                 
                             elif x == 'q':
-                                autoWrite()
+                                writemySTBsFile()
                                 cmd.close()
                                 sys.exit(0)
                      
@@ -2335,11 +2231,16 @@ def main():
                     continue
      
                 elif x == 's':
-                    writeToFile()
+                    writeToFile(stbSaved)
                     continue
                 
                 elif x == 'q':
                     autoWrite()
+                    #if stbSaved == 'true':
+                        #print ('stb is saved')
+                        #updateMySTB()
+                    
+                    #writemySTBsFile()
                     cmd.close()
                     sys.exit(0)
                     

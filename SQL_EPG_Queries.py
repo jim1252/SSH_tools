@@ -60,7 +60,11 @@ def main():
                  7 - Rebroadcast times for future events
                  8 - Event with no rebroadcasting scheduled search by channel
                  9 - Events with no rebroadcast scheduled  search by Start Time
-                 10 - List event with no series and episode number
+                 10 - Find single/individual TV show assets, no series or episode number
+                 11 - TV series missing meta-data, shows 100 current and future events
+                    11a - No Episode Title incomplete Series/Episode
+                    11b - No Episode Title has complete Series/Episode information
+                    11c - Has Episode title incomplete Series/Episode
                  
                  15 - Where Next event parental rating > current event
                  16 - Where Next event parental rating < current event
@@ -172,6 +176,24 @@ def main():
                         cmd.sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "Select datetime(a.start, 'unixepoch', 'localtime') as StartTime, datetime(a.start + a.duration, 'unixepoch', 'localtime') as Endtime, a.EvName, a.contentProviderID , b.ChanNum, b.ServiceName from event_list a inner join service_list b on a.ContentID_Service=b.ContentID_Service where episode_episodeId is null and episode_seasonId is null and a.genre is not 4 and a.genre is not 1024 and b.ChanNum=%s order by StartTime" """ % channel)
                         cont = input('Do you want to run this query for other channel : ')
                     continue
+
+                elif x == '11a':
+                    print('No Episode Title incomplete Series/Episode. Episode number is shown as without it only Single TV show assets would be inluded')
+                    cmd.sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "Select datetime(a.start, 'unixepoch', 'localtime') as StartTime, a.EvName, a.episode_title, a.series_Id, a.episode_seasonId as Season, a.episode_episodeId as Episode, a.contentProviderID , b.ChanNum from event_list a inner join service_list b on a.ContentID_Service=b.ContentID_Service where episode_title is null and episode_seasonId is null and series_Id is not null and a.genre is not 4 and a.genre is not 1024 and datetime(a.start + a.duration, 'unixepoch', 'localtime') > datetime('now', 'localtime') order by StartTime limit 100" """)
+                    continue
+
+                elif x == '11b':
+                    print('No Episode Title has complete Series/Episode information')
+                    cmd.sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "Select datetime(a.start, 'unixepoch', 'localtime') as StartTime, a.EvName, a.episode_title, a.series_Id, a.episode_seasonId as Season, a.episode_episodeId as Episode, a.contentProviderID , b.ChanNum from event_list a inner join service_list b on a.ContentID_Service=b.ContentID_Service where episode_title is null and series_Id is not null and a.genre is not 4 and a.genre is not 1024 and datetime(a.start + a.duration, 'unixepoch', 'localtime') > datetime('now', 'localtime') order by StartTime limit 100" """)
+                    continue
+
+                elif x == '11c':
+                    print('Episode title, incomplete Series/Episode')
+                    cmd.sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "Select datetime(a.start, 'unixepoch', 'localtime') as StartTime, a.EvName, a.episode_title, a.series_Id, a.episode_seasonId as Season, a.episode_episodeId as Episode, a.contentProviderID , b.ChanNum from event_list a inner join service_list b on a.ContentID_Service=b.ContentID_Service where episode_seasonId is null and a.genre is not 4 and a.genre is not 1024 and datetime(a.start + a.duration, 'unixepoch', 'localtime') > datetime('now', 'localtime') and a.episode_title is not null order by StartTime limit 100" """)
+                    continue
+
+
+
 
                 elif x == '15':
                     print('Where Next event parental rating > current event')
