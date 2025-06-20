@@ -948,6 +948,7 @@ def main():
                     11b - No Episode Title has complete Series/Episode information
                     11c - Has Episode title incomplete Series/Episode
                  12 - Series Link Events   
+                 13 - Library Searches
                  
                  15 - Where Next event parental rating > current event
                  16 - Where Next event parental rating < current event
@@ -961,9 +962,7 @@ def main():
                  24 - Main Events
                  
                  25 - Custom Field with channel filter
-                 26 - PVR Library Recorded
-                 27 - VOD Library Recorded
-
+                 
                  b - back               
                  q - quit \n    """
                              
@@ -1137,6 +1136,58 @@ def main():
                                     close()
 
 
+                            elif x == '13': # HDD Library searches
+                                try:
+                                    while True:
+                                        options = """\n      Library searches     \n                            
+                             1 - PVR Library Recorded
+                             2 - VOD Library Downloaded
+                             3 - Series assets in Library
+                             4 - SeriesId search
+                             q - quit
+                             b - back                 """
+                                        print(options)
+                                        x = input('>: ')
+
+                                        if x == '1':
+                                            print('Library PVR Recorded')
+                                            sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "attach '/tmp/cache.db' as db1; attach '/mnt/hd/meta/record.db' as db2; select a.ContentID_Recording,a.evname as '  Programme Title  ', a.episode_title as 'Episode title', datetime(Start,'unixepoch', 'localtime') as 'Recorded at', f.ServiceName as ' Channel Name ', e.value as 'Channel Source', a.series_Id, a.IsSeriesLinked, duration as 'Ev Dur(sec)', actual_duration as 'Rec Dur(sec)',  b.reached_playback_position as 'Watched Dur', a.tungsten_leadtime as 'Lead Time', a.tungsten_lagtime as 'Lag Time' from db1.recorded_event_list a inner join db2.recording b on (a.ContentID_Recording=b.id) inner join db1.RecordedEventCustomFields c on (a.ContentID_Recording=c.recordingId) inner join db1.ServiceCustomFields e on (a.ContentID_Service=e.serviceId) inner join db1.service_list f on (a.ContentID_Service=f.ContentID_Service) where c.key='TitleID' and e.key='ChannelSource'"  """)
+                                            continue
+
+                                        elif x == '2':
+                                            print('Library VOD Recorded')
+                                            sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "attach '/tmp/cache.db' as db1; attach '/mnt/hd/meta/record.db' as db2; select distinct(ContentID_Recording), a.evname as '  Programme Title  ',a.series_Id,time(duration, 'unixepoch') as 'Asset Duration', time(actual_duration, 'unixepoch') as 'Watched Duration', d.value as 'Source Type', c.value as type from db1.recorded_event_list a inner join db2.recording b on (a.ContentID_Recording=b.id) inner join db1.RecordedEventCustomFields c on (a.ContentID_Recording=c.recordingId) inner join db1.RecordedEventCustomFields d on (a.ContentID_Recording=c.recordingId) where c.key='sourceType' and d.key='type'"  """)
+                                            continue
+
+                                        elif x == '3':
+                                            print('Series assets in Library')
+                                            sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "select a.EvName, a.series_Id, a.episode_seasonId as season, a.episode_episodeId as episode, a.contentProviderId, datetime(a.Start,'unixepoch', 'localtime') as 'Recorded at', c.value as Tag, b.ChanNum from recorded_event_list a inner join service_list b on (a.ContentID_Service=b.ContentID_Service) inner join ServiceCustomFields c on (a.ContentID_Service=c.serviceId) where series_Id is not null and c.key='ChannelTag' order by series_Id" """ )
+                                            continue
+                                            
+                                                            
+                                        elif x == '4':
+                                            print('This uses a wildcard search, to find all assets containing the entered seriesID.  You only need to enter part of the seriesID ')
+                                            seriesId = input('Enter the SeriesId : ')
+                                            print('SeriesID to search with:' + seriesId)
+                                            sshSQLCommand(f"""sqlite3 -column -header -separator $'\t' /tmp/cache.db "select a.EvName, a.series_Id, a.episode_seasonId as season, a.episode_episodeId as episode, a.contentProviderId, datetime(a.Start,'unixepoch', 'localtime') as 'Recorded at', c.value as Tag, b.ChanNum from recorded_event_list a inner join service_list b on (a.ContentID_Service=b.ContentID_Service) inner join ServiceCustomFields c on (a.ContentID_Service=c.serviceId) where series_Id like '%{seriesId}%' and c.key='ChannelTag' " """)
+                                            continue  
+                            
+                                        elif x == 'q':
+                                            autoWrite()
+                                            close()
+                                            sys.exit(0)
+
+                                        elif x == 'b':
+                                            break
+
+                                        else:
+                                            print('WARNING: {} is an unknown option. Try again'.format(x))
+                                        continue
+
+                                except KeyboardInterrupt:
+                                    print('CTRL+C Pressed. Shutting Down')
+                                    close()
+
                             elif x == '15':
                                 print('Where Next event parental rating > current event')
                                 sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "select b.ChanNum,b.ServiceName,c.EvName as 'Event',(case when c.Parental='4' then 'G' when c.Parental='5' then 'PG' when c.Parental='6' then 'M' when c.Parental='7' then 'MA15+' when c.Parental='9' then 'R18' END) as Rating,datetime(c.start,'unixepoch','localtime') as StartTime,a.EvName as '   Next Event   ',(case when a.Parental='4' then 'G' when a.Parental='5' then 'PG' when a.Parental='6' then 'M' when a.Parental='7' then 'MA15+' when a.Parental='9' then 'R18' END) as Rating,datetime(a.start,'unixepoch','localtime') as StartTime from event_list c inner join service_list b on (a.ContentID_Service=b.ContentID_Service) inner join event_list a on (a.start=(c.start+c.duration) and a.ContentID_Service=c.ContentID_Service) where datetime(c.start,'unixepoch','localtime')<datetime('now','localtime') and datetime(c.start+c.duration,'unixepoch','localtime')>=datetime('now','localtime') and a.parental>c.Parental and b.ChanNum is not 0 order by b.ChanNum asc;" """)
@@ -1196,16 +1247,6 @@ def main():
                                 command = (f"""sqlite3 /tmp/cache.db "Select b.ChanNum,  a.EvName, datetime(a.start, 'unixepoch', 'localtime') as StartTime from event_list a inner join service_list b on (a.ContentID_Service = b.ContentID_Service) where datetime(a.start + a.duration, 'unixepoch', 'localtime') > datetime('now', 'localtime') and customFields like '%{custom}%' AND ChanNum between {channel_range} order by StartTime LIMIT 25;"  """)
                                 print (command)
                                 sshSQLCommand(command)
-                                continue
-
-                            elif x == '26':
-                                print('Library PVR Recorded')
-                                sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "attach '/tmp/cache.db' as db1; attach '/mnt/hd/meta/record.db' as db2; select a.ContentID_Recording,a.evname as '  Programme Title  ', a.episode_title as 'Episode title', datetime(Start,'unixepoch', 'localtime') as 'Recorded at', f.ServiceName as ' Channel Name ', e.value as 'Channel Source', a.series_Id, a.IsSeriesLinked, duration as 'Ev Dur(sec)', actual_duration as 'Rec Dur(sec)',  b.reached_playback_position as 'Watched Dur', a.tungsten_leadtime as 'Lead Time', a.tungsten_lagtime as 'Lag Time' from db1.recorded_event_list a inner join db2.recording b on (a.ContentID_Recording=b.id) inner join db1.RecordedEventCustomFields c on (a.ContentID_Recording=c.recordingId) inner join db1.ServiceCustomFields e on (a.ContentID_Service=e.serviceId) inner join db1.service_list f on (a.ContentID_Service=f.ContentID_Service) where c.key='TitleID' and e.key='ChannelSource'"  """)
-                                continue
-
-                            elif x == '27':
-                                print('Library VOD Recorded')
-                                sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "attach '/tmp/cache.db' as db1; attach '/mnt/hd/meta/record.db' as db2; select distinct(ContentID_Recording), a.evname as '  Programme Title  ',a.series_Id,time(duration, 'unixepoch') as 'Asset Duration', time(actual_duration, 'unixepoch') as 'Watched Duration', d.value as 'Source Type', c.value as type from db1.recorded_event_list a inner join db2.recording b on (a.ContentID_Recording=b.id) inner join db1.RecordedEventCustomFields c on (a.ContentID_Recording=c.recordingId) inner join db1.RecordedEventCustomFields d on (a.ContentID_Recording=c.recordingId) where c.key='sourceType' and d.key='type'"  """)
                                 continue
 
                             elif x == 'q':
