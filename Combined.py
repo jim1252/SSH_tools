@@ -944,12 +944,9 @@ def main():
                  9 - Events with no rebroadcast scheduled  search by Start Time
                  10 - Find single/individual TV show assets, no series or episode number
                  11 - TV series missing meta-data, shows 100 current and future events
-                    11a - No Episode Title incomplete Series/Episode
-                    11b - No Episode Title has complete Series/Episode information
-                    11c - Has Episode title incomplete Series/Episode
                  12 - Series Link Events   
-                 13 - Library Searches
-                 
+                 13 - STB Library Searches
+                 14 - List Foxtel EPG channels
                  15 - Where Next event parental rating > current event
                  16 - Where Next event parental rating < current event
                  17 - Future instances of rise in parental rating on change of event
@@ -1061,31 +1058,61 @@ def main():
                                     cont = input('Do you want to run this query for other channel : ')
                                 continue
 
-                            elif x == '11a':
-                                print('No Episode Title incomplete Series/Episode. Episode number is shown as without it only Single TV show assets would be inluded')
-                                sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "Select datetime(a.start, 'unixepoch', 'localtime') as StartTime, a.EvName, a.episode_title, a.series_Id, a.episode_seasonId as Season, a.episode_episodeId as Episode, a.contentProviderID , b.ChanNum from event_list a inner join service_list b on a.ContentID_Service=b.ContentID_Service where episode_title is null and episode_seasonId is null and series_Id is not null and a.genre is not 4 and a.genre is not 1024 and datetime(a.start + a.duration, 'unixepoch', 'localtime') > datetime('now', 'localtime') order by StartTime limit 100" """)
-                                continue
+                            elif x == '11': # Series link Searches
+                                try:
+                                    while True:
+                                        options = """\n      Series link SQL searches     \n                            
+                 1 - No Episode Title incomplete Series/Episode
+                 2 - No Episode Title has complete Series/Episode information
+                 3 - Has Episode title incomplete Series/Episode1 - Find available series on specific channel number
+                 q - quit
+                 b - back                 """
+                                        print(options)
+                                        x = input('>: ')
 
-                            elif x == '11b':
-                                print('No Episode Title has complete Series/Episode information')
-                                sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "Select datetime(a.start, 'unixepoch', 'localtime') as StartTime, a.EvName, a.episode_title, a.series_Id, a.episode_seasonId as Season, a.episode_episodeId as Episode, a.contentProviderID , b.ChanNum from event_list a inner join service_list b on a.ContentID_Service=b.ContentID_Service where episode_title is null and series_Id is not null and a.genre is not 4 and a.genre is not 1024 and datetime(a.start + a.duration, 'unixepoch', 'localtime') > datetime('now', 'localtime') order by StartTime limit 100" """)
-                                continue
+                                        if x == '1':
+                                            print('No Episode Title incomplete Series/Episode. Episode number is shown as without it only Single TV show assets would be inluded')
+                                            sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "Select datetime(a.start, 'unixepoch', 'localtime') as StartTime, a.EvName, a.episode_title, a.series_Id, a.episode_seasonId as Season, a.episode_episodeId as Episode, a.contentProviderID , b.ChanNum from event_list a inner join service_list b on a.ContentID_Service=b.ContentID_Service where episode_title is null and episode_seasonId is null and series_Id is not null and a.genre is not 4 and a.genre is not 1024 and datetime(a.start + a.duration, 'unixepoch', 'localtime') > datetime('now', 'localtime') order by StartTime limit 100" """)
+                                            continue
 
-                            elif x == '11c':
-                                print('Episode title, incomplete Series/Episode')
-                                sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "Select datetime(a.start, 'unixepoch', 'localtime') as StartTime, a.EvName, a.episode_title, a.series_Id, a.episode_seasonId as Season, a.episode_episodeId as Episode, a.contentProviderID , b.ChanNum from event_list a inner join service_list b on a.ContentID_Service=b.ContentID_Service where episode_seasonId is null and a.genre is not 4 and a.genre is not 1024 and datetime(a.start + a.duration, 'unixepoch', 'localtime') > datetime('now', 'localtime') and a.episode_title is not null order by StartTime limit 100" """)
-                                continue
+                                        elif x == '2':
+                                            print('No Episode Title has complete Series/Episode information')
+                                            sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "Select datetime(a.start, 'unixepoch', 'localtime') as StartTime, a.EvName, a.episode_title, a.series_Id, a.episode_seasonId as Season, a.episode_episodeId as Episode, a.contentProviderID , b.ChanNum from event_list a inner join service_list b on a.ContentID_Service=b.ContentID_Service where episode_title is null and series_Id is not null and a.genre is not 4 and a.genre is not 1024 and datetime(a.start + a.duration, 'unixepoch', 'localtime') > datetime('now', 'localtime') order by StartTime limit 100" """)
+                                            continue
+
+                                        elif x == '3':
+                                            print('Episode title, incomplete Series/Episode')
+                                            sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "Select datetime(a.start, 'unixepoch', 'localtime') as StartTime, a.EvName, a.episode_title, a.series_Id, a.episode_seasonId as Season, a.episode_episodeId as Episode, a.contentProviderID , b.ChanNum from event_list a inner join service_list b on a.ContentID_Service=b.ContentID_Service where episode_seasonId is null and a.genre is not 4 and a.genre is not 1024 and datetime(a.start + a.duration, 'unixepoch', 'localtime') > datetime('now', 'localtime') and a.episode_title is not null order by StartTime limit 100" """)
+                                            continue
+  
+                                        elif x == 'q':
+                                            autoWrite()
+                                            close()
+                                            sys.exit(0)
+
+                                        elif x == 'b':
+                                            break
+
+                                        else:
+                                            print('WARNING: {} is an unknown option. Try again'.format(x))
+                                        continue
+
+                                except KeyboardInterrupt:
+                                    print('CTRL+C Pressed. Shutting Down')
+                                    close()
+
+
 
                             elif x == '12': # Series link Searches
                                 try:
                                     while True:
                                         options = """\n      Series link SQL searches     \n                            
-                             1 - Find available series on specific channel number
-                             2 - Search for available series for event Title
-                             3 - Search For all assets for specific SeriesID
-                             4 - Air times for first Episodes in a series
-                             q - quit
-                             b - back                 """
+                 1 - Find available series on specific channel number
+                 2 - Search for available series for event Title
+                 3 - Search For all assets for specific SeriesID
+                 4 - Air times for first Episodes in a series
+                 q - quit
+                 b - back                 """
                                         print(options)
                                         x = input('>: ')
 
@@ -1101,7 +1128,7 @@ def main():
                                             print('This uses a wildcard serach, to find an asset like "Blue Bloods", the search terms; blue, bloods, lue bl, will all find the asset "Blue Bloods" ')
                                             title = input('Enter the assets title, : ')
                                             print('Series information search on:' + title)
-                                            sshSQLCommand(f"""sqlite3 -column -header -separator $'\t' /tmp/cache.db "select count (distinct a.episode_episodeId) as episodes, a.EvName as 'Program_Title              ', a.Series_Id, a.episode_seasonId, b.ChanNum from event_list a inner join service_list b on (a.ContentID_Service=b.ContentID_Service) group by EvName, series_Id, episode_seasonId having series_Id is not null and a.episode_seasonNumber < 101 and EvName LIKE '%{title}%' and datetime(a.start, 'unixepoch', 'localtime') > datetime('now', 'localtime') limit 100" """)
+                                            sshSQLCommand(f"""sqlite3 -column -header -separator $'\t' /tmp/cache.db "select count (distinct a.episode_episodeId) as episodes, a.EvName as Program_Title         , a.Series_Id, a.episode_seasonId as season, b.ChanNum, c.RelatedServiceType as Type from event_list a inner join service_list b on (a.ContentID_Service=b.ContentID_Service) inner join related_channel_list c on (a.ContentID_Service=c.RelatedChannelId) group by EvName, series_Id, episode_seasonId having series_Id is not null and a.episode_seasonNumber < 101 and EvName LIKE '%{title}%' and datetime(a.start, 'unixepoch', 'localtime') > datetime('now', 'localtime') limit 100" """)
                                             continue
                                         
                                         elif x == '3':
@@ -1140,12 +1167,12 @@ def main():
                                 try:
                                     while True:
                                         options = """\n      Library searches     \n                            
-                             1 - PVR Library Recorded
-                             2 - VOD Library Downloaded
-                             3 - Series assets in Library
-                             4 - SeriesId search
-                             q - quit
-                             b - back                 """
+                 1 - PVR Library Recorded
+                 2 - VOD Library Downloaded
+                 3 - Series assets in Library
+                 4 - SeriesId search
+                 q - quit
+                 b - back                 """
                                         print(options)
                                         x = input('>: ')
 
@@ -1187,6 +1214,10 @@ def main():
                                 except KeyboardInterrupt:
                                     print('CTRL+C Pressed. Shutting Down')
                                     close()
+
+                            elif x == '14':
+                                print('List of Foxtel EPG channels')
+                                sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "select distinct a.ContentID_Service, a.ServiceName, a.brand as 'Channel_Brand_Name', a.ChanNum, b.RelatedServiceType as Type, c.value as Tag from service_list a inner join related_channel_list b on (a.ContentID_Service=b.RelatedChannelId) inner join ServiceCustomFields c on (a.ContentID_Service=c.serviceId) where c.key='ChannelTag' order by ChanNum asc" """)
 
                             elif x == '15':
                                 print('Where Next event parental rating > current event')
