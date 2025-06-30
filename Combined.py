@@ -1109,8 +1109,9 @@ def main():
                                         options = """\n      Series link SQL searches     \n                            
                  1 - Find available series on specific channel number
                  2 - Search for available series for event Title
-                 3 - Search For all assets for specific SeriesID
-                 4 - Air times for first Episodes in a series
+                 3 - Search for available Episodes for event Title
+                 4 - Search For all assets for specific SeriesID
+                 5 - Air times for first Episodes in a series
                  q - quit
                  b - back                 """
                                         print(options)
@@ -1132,18 +1133,25 @@ def main():
                                             continue
                                         
                                         elif x == '3':
+                                            print('This uses a wildcard serach, to find an asset like "Blue Bloods", the search terms; blue, bloods, lue bl, will all find the asset "Blue Bloods" ')
+                                            title = input('Enter the assets title, : ')
+                                            print('Episode information search on:' + title)
+                                            sshSQLCommand(f"""sqlite3 -column -header -separator $'\t' /tmp/cache.db "select a.EvName, datetime(a.start, 'unixepoch', 'localtime') as StartTime, a.uniqueContentID,  a.episode_seasonId as season, a. episode_episodeId as episode, a.Series_Id, b.Service_key as 'Service Key', c.value as 'Channel Tag', b.ChanNum from event_list a inner join service_list b on (a.ContentID_Service=b.ContentID_Service) inner join ServiceCustomFields c on (a.ContentID_Service=c.serviceId) where datetime(a.start + a.duration, 'unixepoch', 'localtime') > datetime('now', 'localtime') and EvName LIKE '%{title}%' and c.key='ChannelTag' order by series_Id limit 100" """)
+                                            continue
+
+                                        elif x == '4':
                                             print('This will show all episodes of a particular SeriesID')
                                             seriesId = input('Enter the SeriesId : ')
                                             print('SeriesID to search with:' + seriesId)
                                             sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "select a.EvName, datetime(a.start, 'unixepoch', 'localtime') as StartTime, a.episode_seasonId as season, a. episode_episodeId as episode, a.Series_Id,  b.ChanNum from event_list a inner join service_list b on (a.ContentID_Service=b.ContentID_Service) where series_Id = '%s' order by StartTime limit 100" """"" % (seriesId))
                                             continue
 
-                                        elif x == '4':
+                                        elif x == '5':
                                             print('Air times for first episode in series ')
                                             sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "select datetime(a.start, 'unixepoch', 'localtime') as StartTime, a.episode_seasonId as Season, a.episode_episodeNumber as Episode, a.EvName as 'Program Title          ', a.Series_Id, c.value as 'Channel Tag', b.ChanNum from event_list a inner join service_list b on (a.ContentID_Service=b.ContentID_Service) inner join ServiceCustomFields c on (a.ContentID_Service=c.serviceId) where episode_episodeNumber = '1' and episode_seasonId is not null and series_Id is not null and c.key='ChannelTag' and StartTime >= datetime('now','localtime') order by StartTime Asc limit 100" """ )
                                             continue
                                             
-                                        elif x == '5':
+                                        elif x == '6':
                                             print('5')  
                             
                                         elif x == 'q':
