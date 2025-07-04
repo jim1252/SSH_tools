@@ -105,7 +105,7 @@ def getCDSN(): # Gets the STB's CDSN and sets it global as CDSN
         close()
 
 def sshSendCommand(command): 
-    stdin, stdout, stderr = ssh.exec_command(command, timeout=5)
+    stdin, stdout, stderr = ssh.exec_command(command, timeout=10)
     stdin.close()
     args = get_args()
     if args.debug:
@@ -957,8 +957,9 @@ def main():
                  22 - Future events without Startover and event following that with Startover
                  23 - Team Link Events
                  24 - Main Events
+                 25 - Age restricted content on now
                  
-                 25 - Custom Field with channel filter
+                 30 - Custom Field with channel filter
                  
                  b - back               
                  q - quit \n    """
@@ -1277,6 +1278,13 @@ def main():
                                 continue
 
                             elif x == '25':
+                                print('STB age Codes \n 4 = G \n 5 = PG \n 6 = M \n 7 = MA15+ \n 9 = R18')
+                                rating = input('Enter Required age code: ')
+                                print ('Assets that are on Now for: ' + rating)
+                                sshSQLCommand("""sqlite3 -column -header -separator $'\t' /tmp/cache.db "select a.EvName as 'Program_Title       ', (case when a.Parental='4' then 'G' when a.Parental='5' then 'PG' when a.Parental='6' then 'M' when a.Parental='7' then 'MA15+' when a.Parental='9' then 'R18' END) as Rating, b.ChanNum, datetime(a.start,'unixepoch','localtime') as StartTime, datetime(a.start + a.duration, 'unixepoch', 'localtime') as EndTime from event_list a inner join service_list b on (a.ContentID_Service=b.ContentID_Service) where StartTime < Endtime and datetime('now', 'localtime') between StartTime And EndTime and a.Parental = '%s' order by ChanNum;" """"" % rating)
+                                continue
+
+                            elif x == '30':
                                 custom = input('Enter Custom field search criteria "TV_NO_EPS" "MOVIE": ')
                                 channel1 = input('Enter Enter Lower channel number: ')
                                 channel2 = input('Enter Enter Lower channel number, enter previous channel number to search on single channel: ')
